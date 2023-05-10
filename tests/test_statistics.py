@@ -5,9 +5,7 @@ import pytest
 
 from numpy.testing import assert_almost_equal
 
-from kalman_reconstruction.statistics import (
-    my_mean,
-)
+from kalman_reconstruction.statistics import my_mean
 
 
 # Test data
@@ -22,7 +20,7 @@ def example_array_01():
     )
     return data
 
+
 def test_my_mean(example_array_01):
     result = my_mean(example_array_01)
     np.testing.assert_allclose(np.array([np.nan]), result)
-
