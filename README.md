@@ -56,7 +56,7 @@ Project Organization
 
 ### Pre-commit
 In order to use linting, pre-commit is used in this repository.
-To lint your code, install [pre-commit](https://pre-commit.com/) and run ``pre-commit run --all-files`` before each commit. 
+To lint your code, install [pre-commit](https://pre-commit.com/) and run ``pre-commit run --all-files`` before each commit.
 This takes care of formating all files using the configuration from [.pre-commit-config.yaml](.pre-commit-config.yaml).
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>

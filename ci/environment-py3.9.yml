@@ -1,0 +1,16 @@
+name: test_env_test_env_kalman-reconstruction-partially-observered-systems
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  ############## These will have to be adjusted to your specific project
+  - numpy
+  - scipy
+  - pandas
+  - sklearn
+  ##############
+  - pytest
+  - pip:
+      - codecov
+      - pytest-cov
+      - coverage[toml]
