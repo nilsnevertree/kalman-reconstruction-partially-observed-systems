@@ -7,10 +7,10 @@ dependencies:
   - numpy
   - scipy
   - pandas
-  - sklearn
   ##############
   - pytest
   - pip:
       - codecov
       - pytest-cov
       - coverage[toml]
+      - scikit-learn
