@@ -346,3 +346,55 @@ def ensemble_Kalman_filter(y, x0, P0, m, Q, H, R, Ne):
         )
 
     return x_f, P_f, x_a, P_a, loglik
+
+
+def Kalman_SEM_timedependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
+    """Apply the stochastic expectation-maximization algorithm."""
+
+    # fix the seed
+    np.random.seed(11)
+
+    # copy x
+    x_out = x.copy()
+
+    # shapes
+    dim0 = np.shape(x_out)[0]
+    n = np.shape(x_out)[1]
+
+    # tab to store the np.log-likelihood
+    tab_loglik = []
+    M
+
+    # loop on the SEM iterations
+    for i in tqdm(np.arange(0, nb_iter_SEM)):
+        # Kalman parameters
+        reg = LinearRegression(fit_intercept=False).fit(x_out[:-1,], x_out[1:,])
+        M = reg.coef_
+        Q = np.cov((x_out[1:,] - reg.predict(x_out[:-1,])).T)
+        # R   = np.cov(y.T - H @ x.T)
+
+        # Kalman initialization
+        if i == 0:
+            x0 = np.empty(n)
+            P0 = np.eye(n)
+        else:
+            x0 = x_s[0, :]
+            P0 = P_s[
+                0,
+                :,
+                :,
+            ]
+
+        # apply the Kalman smoother
+        x_f, P_f, x_a, P_a, x_s, P_s, loglik, P_s_lag = Kalman_smoother(
+            y, x0, P0, M, Q, H, R
+        )
+
+        # store the np.log-likelihod
+        tab_loglik = np.append(tab_loglik, sum(loglik))
+
+        # simulate the new x
+        for k in range(len(x_s)):
+            x_out[k, :] = np.random.multivariate_normal(x_s[k, :], P_s[k, :, :])
+
+    return x_s, P_s, M, tab_loglik, x_out, x_f, Q
