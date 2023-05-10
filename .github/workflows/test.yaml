@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.10"]
     steps:
       - uses: actions/checkout@v3
       - name: Cache conda
@@ -35,7 +35,7 @@ jobs:
           # channel-priority: true
           environment-file: ci/environment-py${{ matrix.python-version }}.yml
 
-          activate-environment: test_env_climate_index_collection
+          activate-environment: test_env_kalman-reconstruction-partially-observered-systems
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
       - name: Set up conda environment
         shell: bash -l {0}
