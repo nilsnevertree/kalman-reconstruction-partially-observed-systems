@@ -108,7 +108,7 @@ def broadcast_along_axis_as(x, y, axis):
     return res
 
 
-def gaussian_kernel_1D(x, center_idx, axis=0, sigma=10, same_output_shape=False):
+def gaussian_kernel_1D(x, center_idx, axis=0, sigma=100, same_output_shape=False):
     """Creates a Gaussian weights for a N dimensional array x centered at index y along specified axis.
 
     Parameters
@@ -121,7 +121,7 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=10, same_output_shape=False)
         Axis along which the weights shall be computed.
     sigma: float
         sigma of the gaus distribution.
-        Default to 0.2
+        Default to 10
     same_output_shape : bool
         Sets if the output array should be of shape.
         - Output array is 1D array if False.
