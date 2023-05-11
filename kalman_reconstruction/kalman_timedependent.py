@@ -7,6 +7,8 @@ import scipy as sp
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 
+from kalman_reconstruction.statistics import gaussian_kernel_1D
+
 
 def Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R):
     """Apply the linear and Gaussian Kalman filter."""
@@ -63,7 +65,9 @@ def Kalman_smoother_time_dependent(y, x0, P0, M, Q, H, R):
     P_s_lag = np.empty((T - 1, n, n))  # smoothed lagged error covariance matrix
 
     # apply the Kalman filter
-    x_f, P_f, x_a, P_a, loglik, K_a = Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R)
+    x_f, P_f, x_a, P_a, loglik, K_a = Kalman_filter_time_dependent(
+        y, x0, P0, M, Q, H, R
+    )
 
     # apply the Kalman smoother
     x_s[-1, :] = x_a[-1, :]
@@ -91,17 +95,30 @@ def Kalman_SEM__time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
     x_out = x.copy()
 
     # shapes
+    time_dim = np.shape(x_out)[0]
     n = np.shape(x_out)[1]
 
     # tab to store the np.log-likelihood
     tab_loglik = []
 
+    M = np.empty((time_dim, n, n))
+    Q = np.empty_like(M)
+
     # loop on the SEM iterations
     for i in tqdm(np.arange(0, nb_iter_SEM)):
-        # Kalman parameters
-        reg = LinearRegression(fit_intercept=False).fit(x_out[:-1,], x_out[1:,])
-        M = reg.coef_
-        Q = np.cov((x_out[1:,] - reg.predict(x_out[:-1,])).T)
+        # Use a local linear regression to compute M at each timestep.
+        # This is done by using a 1D gaussian kernel centered at the corresponding timestep.
+        for idx in tqdm(range(0, time_dim)):
+            # get the sample weights as 1D gaussian kernel
+            sample_weight = gaussian_kernel_1D(
+                x_out[:-1,], idx, axis=0, sigma=100, same_output_shape=False
+            )
+            # Kalman parameters for each timestep
+            reg = LinearRegression(fit_intercept=False).fit(
+                x_out[:-1,], x_out[1:,], sample_weight=sample_weight
+            )
+            M[idx,] = reg.coef_
+            Q[idx,] = np.cov((x_out[1:,] - reg.predict(x_out[:-1,])).T)
         # R   = np.cov(y.T - H @ x.T)
 
         # Kalman initialization
