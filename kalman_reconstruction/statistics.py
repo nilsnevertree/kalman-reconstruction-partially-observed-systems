@@ -62,32 +62,50 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
     return weights
 
 
-def broadcast_along_axis_as(b, a, axis):
-    """
+def broadcast_along_axis_as(x, y, axis):
+    """Broadcasts 1D array x to an array of same shape as y, containing the given axis.
+    The length of x need to be the same as the length of y along the given axis.
+    Note that this is a broadcast_to, so the return is a view on x.
     Based on the answer at https://stackoverflow.com/a/62655664/16372843
+
+    Parameters
+    ----------
+    x: np.ndarray
+        Array of dimension 1 which should be broadcasted for a specific axis.
+    x: np.ndarray
+        Array of dimension 1 which should be broadcasted for a specific axis.
+    axis: int
+        Axis along which the arrays allign.
+
+    Returns
+    -------
+    np.ndarray
+        Array containing values along provided axis as x but with shape y.
+        Note that this is a broadcast_to, so the return is a view on x.
     """
     # shape check
-    if axis >= a.ndim:
-        raise np.AxisError(axis, a.ndim)
-    if b.ndim != 1:
-        raise ValueError(f"ndim of 'b' : {b.ndim} must be 1")
-
-    if a.shape[axis] != b.size:
-        raise ValueError("Length of 'b' must be the same as a.shape along the axis")
+    if axis >= y.ndim:
+        raise np.AxisError(axis, y.ndim)
+    if x.ndim != 1:
+        raise ValueError(f"ndim of 'x' : {x.ndim} must be 1")
+    if x.size != y.shape[axis]:
+        raise ValueError(
+            f"Length of 'x' must be the same as y.shape along the axis. But found {x.size}, {y.shape[axis]}, axis= {axis}"
+        )
 
     # np.broadcast_to puts the new axis as the last axis, so
     # we swap the given axis with the last one, to determine the
     # corresponding array shape. np.swapaxes only returns a view
     # of the supplied array, so no data is copied unnecessarily.
-    shape = np.swapaxes(a, a.ndim - 1, axis).shape
+    shape = np.swapaxes(y, y.ndim - 1, axis).shape
 
     # Broadcast to an array with the shape as above. Again,
     # no data is copied, we only get a new look at the existing data.
-    b_brc = np.broadcast_to(b, shape)
+    res = np.broadcast_to(x, shape)
 
     # Swap back the axes. As before, this only changes our "point of view".
-    b_brc = np.swapaxes(b_brc, a.ndim - 1, axis)
-    return b_brc
+    res = np.swapaxes(res, y.ndim - 1, axis)
+    return res
 
 
 def gaussian_kernel_1D(x, center_idx, axis=0, sigma=0.2, same_output_shape=False):
@@ -102,14 +120,21 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=0.2, same_output_shape=False
     axis: int
         Axis along which the weights shall be computed.
     sigma: float
-        Alpha of the gaus distribution.
+        sigma of the gaus distribution.
         Default to 0.2
+    same_output_shape : bool
+        Sets if the output array should be of shape.
+        - Output array is 1D array if False.
+        - Output array of same shape as x if True.
+          Then the weights will be along the provided axis
 
     Returns
     -------
     np.ndarray
-        1D array of length x.shape[axis] containing the gaussian kernel.
-
+        Array containing the weights of the kernel.
+        If output is 1D, along this axis.
+        If output in ND, along provided axis.
+        See also 'same_output_shape'.
     """
 
     index_array = np.arange(x.shape[axis])
