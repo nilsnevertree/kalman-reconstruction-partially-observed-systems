@@ -24,7 +24,7 @@ def my_mean(x):
 
 def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
     """Creates a Gaussian weights for a 2D-array x centered at positions given by y.
-    The weights will be computed along the specified axis. 
+    The weights will be computed along the specified axis.
 
     Parameters
     ----------
@@ -62,7 +62,7 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
     return weights
 
 
-def broadcast_along_axis_as(b, a, axis) :
+def broadcast_along_axis_as(b, a, axis):
     """
     Based on the answer at https://stackoverflow.com/a/62655664/16372843
     """
@@ -70,31 +70,27 @@ def broadcast_along_axis_as(b, a, axis) :
     if axis >= a.ndim:
         raise np.AxisError(axis, a.ndim)
     if b.ndim != 1:
-        raise ValueError(
-            f"ndim of 'b' : {b.ndim} must be 1"
-            )
-        
-    if a.shape[axis] != b.size:
-        raise ValueError(
-            "Length of 'b' must be the same as a.shape along the axis"
-            )
+        raise ValueError(f"ndim of 'b' : {b.ndim} must be 1")
 
-    # np.broadcast_to puts the new axis as the last axis, so 
+    if a.shape[axis] != b.size:
+        raise ValueError("Length of 'b' must be the same as a.shape along the axis")
+
+    # np.broadcast_to puts the new axis as the last axis, so
     # we swap the given axis with the last one, to determine the
     # corresponding array shape. np.swapaxes only returns a view
     # of the supplied array, so no data is copied unnecessarily.
-    shape = np.swapaxes(a, a.ndim-1, axis).shape
+    shape = np.swapaxes(a, a.ndim - 1, axis).shape
 
-    # Broadcast to an array with the shape as above. Again, 
+    # Broadcast to an array with the shape as above. Again,
     # no data is copied, we only get a new look at the existing data.
     b_brc = np.broadcast_to(b, shape)
 
     # Swap back the axes. As before, this only changes our "point of view".
-    b_brc = np.swapaxes(b_brc, a.ndim-1, axis)
+    b_brc = np.swapaxes(b_brc, a.ndim - 1, axis)
     return b_brc
 
 
-def gaussian_kernel_1D(x, center_idx, axis=0, sigma=0.2, same_output_shape = False):
+def gaussian_kernel_1D(x, center_idx, axis=0, sigma=0.2, same_output_shape=False):
     """Creates a Gaussian weights for a N dimensional array x centered at index y along specified axis.
 
     Parameters
@@ -112,7 +108,7 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=0.2, same_output_shape = Fal
     Returns
     -------
     np.ndarray
-        1D array of length x.shape[axis] containing the gaussian kernel. 
+        1D array of length x.shape[axis] containing the gaussian kernel.
 
     """
 
@@ -124,5 +120,5 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=0.2, same_output_shape = Fal
     # normalize the weights
     if not same_output_shape:
         return kernel
-    else :
+    else:
         return broadcast_along_axis_as(kernel, x, axis=axis)
