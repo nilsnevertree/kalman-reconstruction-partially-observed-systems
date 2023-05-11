@@ -64,7 +64,7 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
 
 def broadcast_along_axis_as(x, y, axis):
     """Broadcasts 1D array x to an array of same shape as y, containing the given axis.
-    The length of x need to be the same as the length of y along the given axis. 
+    The length of x need to be the same as the length of y along the given axis.
     Note that this is a broadcast_to, so the return is a view on x.
     Based on the answer at https://stackoverflow.com/a/62655664/16372843
 
@@ -89,7 +89,9 @@ def broadcast_along_axis_as(x, y, axis):
     if x.ndim != 1:
         raise ValueError(f"ndim of 'x' : {x.ndim} must be 1")
     if x.size != y.shape[axis]:
-        raise ValueError(f"Length of 'x' must be the same as y.shape along the axis. But found {x.size}, {y.shape[axis]}, axis= {axis}")
+        raise ValueError(
+            f"Length of 'x' must be the same as y.shape along the axis. But found {x.size}, {y.shape[axis]}, axis= {axis}"
+        )
 
     # np.broadcast_to puts the new axis as the last axis, so
     # we swap the given axis with the last one, to determine the
