@@ -111,7 +111,7 @@ def Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
         for idx in range(0, time_dim):
             # get the sample weights as 1D gaussian kernel
             sample_weight = gaussian_kernel_1D(
-                x_out[:-1,], idx, axis=0, sigma=100, same_output_shape=False
+                x_out[:-1,], idx, axis=0, same_output_shape=False
             )
             # Kalman parameters for each timestep
             reg = LinearRegression(fit_intercept=False).fit(
