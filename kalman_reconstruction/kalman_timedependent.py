@@ -28,8 +28,8 @@ def Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R):
     # apply the Kalman filter
     for k in range(1, T):
         # prediction step
-        x_f[k, :] = M @ x_a[k - 1, :]
-        P_f[k, :, :] = M @ P_a[k - 1, :, :] @ M.T + Q
+        x_f[k, :] = M[k, :, :] @ x_a[k - 1, :]
+        P_f[k, :, :] = M[k, :, :] @ P_a[k - 1, :, :] @ M[k, :, :].T + Q
 
         # Kalman gain
         K_a[k, :, :] = P_f[k, :, :] @ H.T @ np.linalg.inv(H @ P_f[k, :, :] @ H.T + R)
@@ -63,18 +63,18 @@ def Kalman_smoother_time_dependent(y, x0, P0, M, Q, H, R):
     P_s_lag = np.empty((T - 1, n, n))  # smoothed lagged error covariance matrix
 
     # apply the Kalman filter
-    x_f, P_f, x_a, P_a, loglik, K_a = Kalman_filter(y, x0, P0, M, Q, H, R)
+    x_f, P_f, x_a, P_a, loglik, K_a = Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R)
 
     # apply the Kalman smoother
     x_s[-1, :] = x_a[-1, :]
     P_s[-1, :, :] = P_a[-1, :, :]
     for k in range(T - 2, -1, -1):
-        K = P_a[k, :, :] @ M.T @ np.linalg.inv(P_f[k + 1, :, :])
+        K = P_a[k, :, :] @ M[k, :, :].T @ np.linalg.inv(P_f[k + 1, :, :])
         x_s[k, :] = x_a[k, :] + K @ (x_s[k + 1, :] - x_f[k + 1, :])
         P_s[k, :, :] = P_a[k, :, :] + K @ (P_s[k + 1, :, :] - P_f[k + 1, :, :]) @ K.T
 
     for k in range(0, T - 1):
-        A = (np.eye(n) - K_a[k + 1, :, :] @ H) @ M @ P_a[k, :, :]
+        A = (np.eye(n) - K_a[k + 1, :, :] @ H) @ M[k, :, :] @ P_a[k, :, :]
         B = (P_s[k + 1, :, :] - P_a[k + 1, :, :]) @ np.linalg.inv(P_a[k + 1, :, :])
         P_s_lag[k, :, :] = A + B @ A
 
@@ -117,7 +117,7 @@ def Kalman_SEM__time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
             ]
 
         # apply the Kalman smoother
-        x_f, P_f, x_a, P_a, x_s, P_s, loglik, P_s_lag = Kalman_smoother(
+        x_f, P_f, x_a, P_a, x_s, P_s, loglik, P_s_lag = Kalman_smoother_time_dependent(
             y, x0, P0, M, Q, H, R
         )
 
