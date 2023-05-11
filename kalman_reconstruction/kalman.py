@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" Kalman.py: Apply the linear and Gaussian Kalman filter and smoother. """
+""" kalman.py: Apply the linear and Gaussian Kalman filter and smoother. """
 
 __author__ = "Pierre Tandeo"
 __version__ = "0.1"
