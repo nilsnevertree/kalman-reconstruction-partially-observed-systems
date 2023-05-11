@@ -31,7 +31,7 @@ def Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R):
     for k in range(1, T):
         # prediction step
         x_f[k, :] = M[k, :, :] @ x_a[k - 1, :]
-        P_f[k, :, :] = M[k, :, :] @ P_a[k - 1, :, :] @ M[k, :, :].T + Q
+        P_f[k, :, :] = M[k, :, :] @ P_a[k - 1, :, :] @ M[k, :, :].T + Q[k, :, :]
 
         # Kalman gain
         K_a[k, :, :] = P_f[k, :, :] @ H.T @ np.linalg.inv(H @ P_f[k, :, :] @ H.T + R)
@@ -85,7 +85,7 @@ def Kalman_smoother_time_dependent(y, x0, P0, M, Q, H, R):
     return x_f, P_f, x_a, P_a, x_s, P_s, loglik, P_s_lag
 
 
-def Kalman_SEM__time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
+def Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
     """Apply the stochastic expectation-maximization algorithm."""
 
     # fix the seed
@@ -108,7 +108,7 @@ def Kalman_SEM__time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
     for i in tqdm(np.arange(0, nb_iter_SEM)):
         # Use a local linear regression to compute M at each timestep.
         # This is done by using a 1D gaussian kernel centered at the corresponding timestep.
-        for idx in tqdm(range(0, time_dim)):
+        for idx in range(0, time_dim):
             # get the sample weights as 1D gaussian kernel
             sample_weight = gaussian_kernel_1D(
                 x_out[:-1,], idx, axis=0, sigma=100, same_output_shape=False
