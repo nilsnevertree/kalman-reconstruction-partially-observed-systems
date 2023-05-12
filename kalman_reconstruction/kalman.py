@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" Kalman.py: Apply the linear and Gaussian Kalman filter and smoother. """
+""" kalman.py: Apply the linear and Gaussian Kalman filter and smoother. """
 
 __author__ = "Pierre Tandeo"
 __version__ = "0.1"
@@ -178,53 +178,6 @@ def Kalman_SEM(x, y, H, R, nb_iter_SEM):  # , x_t, t):
         # simulate the new x
         for k in range(len(x_s)):
             x_out[k, :] = np.random.multivariate_normal(x_s[k, :], P_s[k, :, :])
-
-        """
-        if(np.shape(x_s)[1]==3):
-            # plot
-            figure()
-            i_unobs_comp=0
-            subplot(2,3,1)
-            plot(x_s[:,0], x_s[:,2], 'C2')
-            #plot(x_t[:,1], x_t[:,0], 'k--')
-            title('$(z_1, x_2)$ plane', size=30)
-            xlabel('$x_2$', size=20)
-            ylabel('$z_1$', size=20)
-            xlim([-24,22])
-            ylim([-27,35])
-            subplot(2,3,2)
-            plot(x_s[:,1], x_s[:,2], 'C2')
-            #plot(x_t[:,2], x_t[:,0], 'k--')
-            title('$(z_1, x_3)$ plane', size=30)
-            xlabel('$x_3$', size=20)
-            #ylabel('$z_1$', size=20)
-            xlim([8,43])
-            ylim([-27,35])
-            subplot(2,3,3)
-            plot(tab_loglik[1:], 'C2')
-            #plot(loglik_V0[1:], '--k')
-            title('Log-likelihood', size=30)
-            xlabel('Iterations', size=20)
-            xlim([0,30])
-            ylim([12000,30000])
-            subplot(2,3,(4,6))
-            # true components
-            tab_labels = ['$x_1$', '$x_2$', '$x_3$', '$z_1$']
-            plot(t, x_t[:,i_unobs_comp], '--k')
-            plot(t, x_t[:,1], color='C0')
-            plot(t, x_t[:,2], color='C1')
-            plot(t, x_s[:,2], color='C2')
-            legend(tab_labels, loc=1, fontsize='xx-large')
-            ylim([-30,45])
-            xlim([t[0],t[-1]])
-            fill_between(t, x_s[:,2]-1.96*sqrt(P_s[:,2,2]), x_s[:,2]+1.96*sqrt(P_s[:,2,2]), facecolor='C2', alpha=0.25)
-            xlabel('Time', size=20)
-            ylabel('Lorenz components', size=20)
-            ylim([-30,45])
-            xlim([t[0],t[-1]])
-            savefig('/home/administrateur/Dropbox/Applications/Overleaf/presentation_buenos_aires_2023_02_10/L63_' + format(i+1, '03d') + '.png', bbox_inches='tight', dpi=50)
-            close()
-        """
 
     return x_s, P_s, M, tab_loglik, x_out, x_f, Q
 
