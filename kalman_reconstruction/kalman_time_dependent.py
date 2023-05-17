@@ -85,7 +85,7 @@ def Kalman_smoother_time_dependent(y, x0, P0, M, Q, H, R):
     return x_f, P_f, x_a, P_a, x_s, P_s, loglik, P_s_lag
 
 
-def Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
+def Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM, sigma=100):  # , x_t, t):
     """Apply the stochastic expectation-maximization algorithm."""
 
     # fix the seed
@@ -111,7 +111,7 @@ def Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
         for idx in range(0, time_dim):
             # get the sample weights as 1D gaussian kernel
             sample_weight = gaussian_kernel_1D(
-                x_out[:-1,], idx, axis=0, same_output_shape=False
+                x_out[:-1,], idx, axis=0, sigma=sigma, same_output_shape=False
             )
             # Kalman parameters for each timestep
             reg = LinearRegression(fit_intercept=False).fit(
