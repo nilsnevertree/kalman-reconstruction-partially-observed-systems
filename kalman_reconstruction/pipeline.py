@@ -105,6 +105,7 @@ def run_Kalman_SEM_to_xarray(
     - state_names_copy: Dimension representing a copy of the state variables.
 
     Output Coordinates:
+    - time: Coordinates corresponding to the time of the input dataset.
     - state_names: Coordinates corresponding to the state variables.
     - state_names_copy: Coordinates corresponding to the copy of the state variables.
     - kalman_itteration: Coordinates representing the Kalman SEM iteration index.
@@ -161,7 +162,15 @@ def run_Kalman_SEM_to_xarray(
     # create result dataset in which to store the whole lists
     # ---------------
     result = xr.Dataset({})
-
+    # assign coordinates
+    result = result.assign_coords(
+        dict(
+            time=ds["time"],
+            state_names=observation_variables,
+            state_names_copy=observation_variables,
+            kalman_itteration=np.arange(nb_iter_SEM)
+        )
+    )
     # store x_s
     new_var = join_names(["states", suffix])
     result[new_var] = xr.DataArray(
@@ -174,13 +183,7 @@ def run_Kalman_SEM_to_xarray(
         data=P_s,
         dims=["time", "state_names", "state_names_copy"],
     )
-    # store M and Q
-    result = result.assign_coords(
-        dict(
-            state_names=observation_variables,
-            state_names_copy=observation_variables,
-        )
-    )
+
     # store M
     new_var = join_names(["M", suffix])
     result[new_var] = xr.DataArray(
@@ -194,7 +197,6 @@ def run_Kalman_SEM_to_xarray(
         dims=["state_names", "state_names_copy"],
     )
     # store the log_likelihod
-    result = result.assign_coords(dict(kalman_itteration=np.arange(nb_iter_SEM)))
     new_var = join_names(["log_likelihod", suffix])
     result[new_var] = xr.DataArray(
         data=log_likelihod,
@@ -361,7 +363,15 @@ def xarray_Kalman_SEM_time_dependent(
     # create result dataset in which to store the whole lists
     # ---------------
     result = xr.Dataset({})
-
+    # assign coordinates
+    result = result.assign_coords(
+        dict(
+            time=ds["time"],
+            state_names=observation_variables,
+            state_names_copy=observation_variables,
+            kalman_itteration=np.arange(nb_iter_SEM)
+        )
+    )
     # store x_s
     new_var = join_names(["states", suffix])
     result[new_var] = xr.DataArray(
@@ -394,7 +404,6 @@ def xarray_Kalman_SEM_time_dependent(
         dims=["time", "state_names", "state_names_copy"],
     )
     # store the log_likelihod
-    result = result.assign_coords(dict(kalman_itteration=np.arange(nb_iter_SEM)))
     new_var = join_names(["log_likelihod", suffix])
     result[new_var] = xr.DataArray(
         data=log_likelihod,
