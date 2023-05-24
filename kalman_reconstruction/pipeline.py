@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 
 from kalman_reconstruction.kalman import Kalman_SEM
-from kalman_reconstruction.kalman_time_dependent import  Kalman_SEM_time_dependent
+from kalman_reconstruction.kalman_time_dependent import Kalman_SEM_time_dependent
 
 
 def run_Kalman_SEM(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001):
@@ -55,6 +55,7 @@ def run_Kalman_SEM(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001
 
     # stochastic EM
     return Kalman_SEM(x, y, H, R, nb_iter_SEM)
+
 
 def run_Kalman_SEM_to_xarray(
     ds,
@@ -202,7 +203,10 @@ def run_Kalman_SEM_to_xarray(
 
     return result
 
-def run_Kalman_SEM_time_dependent(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001):
+
+def run_Kalman_SEM_time_dependent(
+    y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001
+):
     """
     Run the Kalman Stochastic Expectation-Maximization (SEM) algorithm.
 
@@ -431,10 +435,9 @@ def add_random_variable(ds, var_name, random_generator, variance, dim="time"):
     """
 
     ds[var_name] = xr.DataArray(
-            data=random_generator.normal(loc=0, scale=variance, size=len(ds[dim])),
-            dims=[dim],
-        )
-
+        data=random_generator.normal(loc=0, scale=variance, size=len(ds[dim])),
+        dims=[dim],
+    )
 
 
 def expand_dims_coords(
