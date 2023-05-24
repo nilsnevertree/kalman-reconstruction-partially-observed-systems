@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 
 from kalman_reconstruction.kalman import Kalman_SEM
-import kalman_reconstruction.kalman_time_dependent as kltd
+from kalman_reconstruction.kalman_time_dependent import  Kalman_SEM_time_dependent
 
 
 def run_Kalman_SEM(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001):
@@ -251,7 +251,7 @@ def run_Kalman_SEM_time_dependent(y_list, random_list, nb_iter_SEM=30, variance_
     R = variance_obs_comp * np.eye(p)
 
     # stochastic EM
-    return kltd.Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM)
+    return Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM)
 
 
 def xarray_Kalman_SEM_time_dependent(
