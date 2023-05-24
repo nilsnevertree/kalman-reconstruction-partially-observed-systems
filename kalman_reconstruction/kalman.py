@@ -1,12 +1,12 @@
-#!/usr/bin/env python
-
-""" kalman.py: Apply the linear and Gaussian Kalman filter and smoother. """
+""" kalman.py: Apply the linear and Gaussian Kalman filter and smoother
 
 __author__ = "Pierre Tandeo"
 __version__ = "0.1"
 __date__ = "2022-03-09"
 __maintainer__ = "Pierre Tandeo"
 __email__ = "pierre.tandeo@imt-atlantique.fr"
+
+"""
 
 import numpy as np
 import scipy as sp
@@ -16,8 +16,48 @@ from tqdm import tqdm
 
 
 def Kalman_filter(y, x0, P0, M, Q, H, R):
-    """Apply the linear and Gaussian Kalman filter."""
+    """
+    Apply the linear and Gaussian Kalman filter to estimate the state of a
+    system.
 
+    This function applies the Kalman filter to a system with linear dynamics and Gaussian noise.
+
+    The underlying Kalman equations are:
+    x(t) = M x(t+dt) + Q
+    y(t) = H x(t) + R
+
+    Parameters
+    ----------
+    y : array-like, shape (T, p)
+        Observations of the system state observed over time.
+    x0 : array-like, shape (n,)
+        Initial estimate of the system state.
+    P0 : array-like, shape (n, n)
+        Initial estimate of the error covariance matrix of the system state.
+    M : array-like, shape (n, n)
+        State transition matrix.
+    Q : array-like, shape (n, n)
+        Process noise covariance matrix.
+    H : array-like, shape (p, n)
+        Observation matrix that maps the state space to the observation space.
+    R : array-like, shape (p, p)
+        Covariance matrix representing the observation noise.
+
+    Returns
+    -------
+    x_f : array-like, shape (T, n)
+        Forecasted state estimates.
+    P_f : array-like, shape (T, n, n)
+        Forecasted error covariance matrices of the state estimates.
+    x_a : array-like, shape (T, n)
+        Updated state estimates after assimilating the observations.
+    P_a : array-like, shape (T, n, n)
+        Updated error covariance matrices of the state estimates after assimilating the observations.
+    loglik : array-like, shape (T,)
+        Log-likelihood values of the observations.
+    K_a : array-like, shape (T, n, p)
+        Kalman gain matrices used in the analysis step.
+    """
     # shapes
     n = len(x0)
     T, p = np.shape(y)
@@ -58,7 +98,54 @@ def Kalman_filter(y, x0, P0, M, Q, H, R):
 
 
 def Kalman_smoother(y, x0, P0, M, Q, H, R):
-    """Apply the linear and Gaussian Kalman smoother."""
+    """
+    Apply the linear and Gaussian Kalman smooother to estimate the state of a
+    system.
+
+    This function applies the Kalman smoother to a system with linear dynamics and Gaussian noise.
+
+    The underlying Kalman equations are:
+    x(t) = M x(t+dt) + Q
+    y(t) = H x(t) + R
+
+    Parameters
+    ----------
+    y : array-like, shape (T, p)
+        Observations of the system state observed over time.
+    x0 : array-like, shape (n,)
+        Initial estimate of the system state.
+    P0 : array-like, shape (n, n)
+        Initial estimate of the error covariance matrix of the system state.
+    M : array-like, shape (n, n)
+        State transition matrix.
+    Q : array-like, shape (n, n)
+        Process noise covariance matrix.
+    H : array-like, shape (p, n)
+        Observation matrix that maps the state space to the observation space.
+    R : array-like, shape (p, p)
+        Observation noise covariance matrix.
+
+    Returns
+    -------
+    x_f : array-like, shape (T, n)
+        Forecasted state estimates.
+    P_f : array-like, shape (T, n, n)
+        Forecasted error covariance matrices of the state estimates.
+    x_a : array-like, shape (T, n)
+        Updated state estimates after assimilating the observations.
+    P_a : array-like, shape (T, n, n)
+        Updated error covariance matrices of the state estimates after assimilating the observations.
+    loglik : array-like, shape (T,)
+        Log-likelihood values of the observations.
+    K_a : array-like, shape (T, n, p)
+        Kalman gain matrices used in the analysis step.
+    x_s : array, shape (T, n)
+        Smoothed updated state estimates after assimilating the observations.
+    P_s : array, shape (T, n, n)
+        Smoothed error covariance matrices of the state estimates after assimilating the observations.
+    P_s_lag : array, shape (T, n, n)
+        Smoothed lagged error covariance matrices of the state estimates after assimilating the observations.
+    """
 
     # shapes
     n = len(x0)
@@ -133,8 +220,57 @@ def Kalman_EM(y, xb, B, M, Q, H, R, nb_iter_EM):
 
 
 def Kalman_SEM(x, y, H, R, nb_iter_SEM):  # , x_t, t):
-    """Apply the stochastic expectation-maximization algorithm."""
+    """
+    Apply the Kalman Stochastic Expectation Maximization alogrihtm to estimate
+    the state of a system. This function applies the Kalman Stochastic
+    Expectation Maximization alogrihtm to a system with linear dynamics and
+    Gaussian noise.
 
+    A global linear regression is used to update the estimates of the
+    - true state transition matrix M and
+    - true process noise covariance matrix Q.
+
+    The underlying Kalman equations are:
+    x(t) = M x(t+dt) + Q
+    y(t) = H x(t) + R
+
+    Parameters
+    ----------
+    x : array-like, shape (T, n)
+        System state over time period of length T, having n states.
+    y : array-like, shape (T, p)
+        Observations of the system state observed over time.
+    H : array-like, shape (p, n)
+        First estimation of the observation matrix that maps the state space to the observation space.
+    R : array-like, shape (p, p)
+        First estimation of the observation noise covariance matrix.
+    nb_iter_SEM : int
+        Number of itterations that shall be performed for the alogithm.
+    seed : int, optional
+        Seed for the NumPy random number generator. By providing a seed,
+        you can ensure reproducibility of the random numbers generated.
+        If not specified, a default seed will be used 11.
+
+    Returns
+    -------
+    x_s : array, shape (T, n)
+        Smoothed updated state estimates after assimilating the observations.
+        This represents the state (x) of the system after the final itteration of the algorithm.
+    P_s : array, shape (T, n, n)
+        Smoothed error covariance matrices of the state estimates after assimilating the observations.
+        This represents the error covariance matrices as a function of time after the final itteration of the algorithm.
+    M : array, shape (n, n)
+        Estimation of the true state transition matrix M after the final itteration of the algorithm.
+    tab_loglik : array, shape (nb_iter_SEM)
+        Sum of the log-likelihod over time dimension for each itteration of the algorithm.
+    x_out : array, shape (T, n)
+        Simulated the new state based on a multivariate normal distribution which uses
+        x_s as mean and P_s as Covariance matrix.
+    x_f : array, shape (T, n)
+        Forecasted state estimates after assimilating the observations by the used Kalman Filter, after the final itteration of the algorithm.
+    Q : array shape (T, p, p)
+        Estimation of the true process noise covariance matrix Q after the final itteration of the algorithm.
+    """
     # fix the seed
     np.random.seed(11)
 

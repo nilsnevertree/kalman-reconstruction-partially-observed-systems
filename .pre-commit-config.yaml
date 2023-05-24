@@ -64,6 +64,8 @@ repos:
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
+      - id: black
+        args: [--config=./pyproject.toml]
       - id: black-jupyter
         language_version: python3
 
@@ -76,6 +78,14 @@ repos:
           [
             --max-size=1k
           ]
+
+    # Docformatter to format docstrings
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.6.1
+    hooks:
+      - id: docformatter
+        additional_dependencies: [tomli]
+        args: [--config=./pyproject.toml]
 
   # Check on large files as last hook
   - repo: https://github.com/pre-commit/pre-commit-hooks

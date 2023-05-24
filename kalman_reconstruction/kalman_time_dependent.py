@@ -1,5 +1,9 @@
-""" Timedependent verions of Kalman.py:
-Apply the linear and Gaussian Kalman filter and smoother with timedependent Model M and Model Error Q """
+"""
+Module containing time dependent version of the Kalman filter, smoother and
+stochastic estimation maximization alogorithm.
+
+The module includes
+"""
 
 import numpy as np
 import scipy as sp
@@ -11,7 +15,48 @@ from kalman_reconstruction.statistics import gaussian_kernel_1D
 
 
 def Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R):
-    """Apply the linear and Gaussian Kalman filter."""
+    """
+    Apply the linear and Gaussian Kalman filter to estimate the state of a
+    time-dependent system.
+
+    This function applies the Kalman filter to a time-dependent system with linear dynamics and Gaussian noise.
+
+    The underlying Kalman equations are:
+    x(t) = M x(t+dt) + Q
+    y(t) = H x(t) + R
+
+    Parameters
+    ----------
+    y : array-like, shape (T, p)
+        Observations of the system state observed over time.
+    x0 : array-like, shape (n,)
+        Initial estimate of the system state.
+    P0 : array-like, shape (n, n)
+        Initial estimate of the error covariance matrix of the system state.
+    M : array-like, shape (T, n, n)
+        Time-varying state transition matrix.
+    Q : array-like, shape (T, n, n)
+        Time-varying process noise covariance matrix.
+    H : array-like, shape (p, n)
+        Observation matrix that maps the state space to the observation space.
+    R : array-like, shape (p, p)
+        Covariance matrix representing the observation noise.
+
+    Returns
+    -------
+    x_f : array-like, shape (T, n)
+        Forecasted state estimates.
+    P_f : array-like, shape (T, n, n)
+        Forecasted error covariance matrices of the state estimates.
+    x_a : array-like, shape (T, n)
+        Updated state estimates after assimilating the observations.
+    P_a : array-like, shape (T, n, n)
+        Updated error covariance matrices of the state estimates after assimilating the observations.
+    loglik : array-like, shape (T,)
+        Log-likelihood values of the observations.
+    K_a : array-like, shape (T, n, p)
+        Kalman gain matrices used in the analysis step.
+    """
 
     # shapes
     n = len(x0)
@@ -53,7 +98,54 @@ def Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R):
 
 
 def Kalman_smoother_time_dependent(y, x0, P0, M, Q, H, R):
-    """Apply the linear and Gaussian Kalman smoother."""
+    """
+    Apply the linear and Gaussian Kalman smooother to estimate the state of a
+    time-dependent system. Thus the provided Observation.
+
+    This function applies the Kalman smoother to a time-dependent system with linear dynamics and Gaussian noise.
+
+    The underlying Kalman equations are:
+    x(t) = M x(t+dt) + Q
+    y(t) = H x(t) + R
+
+    Parameters
+    ----------
+    y : array-like, shape (T, p)
+        Observations of the system state observed over time.
+    x0 : array-like, shape (n,)
+        Initial estimate of the system state.
+    P0 : array-like, shape (n, n)
+        Initial estimate of the error covariance matrix of the system state.
+    M : array-like, shape (T, n, n)
+        Time-varying state transition matrix.
+    Q : array-like, shape (T, n, n)
+        Time-varying process noise covariance matrix.
+    H : array-like, shape (p, n)
+        Observation matrix that maps the state space to the observation space.
+    R : array-like, shape (p, p)
+        Observation noise covariance matrix.
+
+    Returns
+    -------
+    x_f : array-like, shape (T, n)
+        Forecasted state estimates.
+    P_f : array-like, shape (T, n, n)
+        Forecasted error covariance matrices of the state estimates.
+    x_a : array-like, shape (T, n)
+        Updated state estimates after assimilating the observations.
+    P_a : array-like, shape (T, n, n)
+        Updated error covariance matrices of the state estimates after assimilating the observations.
+    loglik : array-like, shape (T,)
+        Log-likelihood values of the observations.
+    K_a : array-like, shape (T, n, p)
+        Kalman gain matrices used in the analysis step.
+    x_s : array, shape (T, n)
+        Smoothed updated state estimates after assimilating the observations.
+    P_s : array, shape (T, n, n)
+        Smoothed error covariance matrices of the state estimates after assimilating the observations.
+    P_s_lag : array, shape (T, n, n)
+        Smoothed lagged error covariance matrices of the state estimates after assimilating the observations.
+    """
 
     # shapes
     n = len(x0)
@@ -85,33 +177,91 @@ def Kalman_smoother_time_dependent(y, x0, P0, M, Q, H, R):
     return x_f, P_f, x_a, P_a, x_s, P_s, loglik, P_s_lag
 
 
-def Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM):  # , x_t, t):
-    """Apply the stochastic expectation-maximization algorithm."""
+def Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM, sigma=100, seed=11):
+    """
+    Apply the Kalman Stochastic Expectation Maximization alogrihtm to estimate
+    the state of a time-dependent system. This function applies the Kalman
+    Stochastic Expectation Maximization alogrihtm to a time-dependent system
+    with linear dynamics and Gaussian noise.
+
+    To account for the time dependency of the system, a local linear regression is used to update the estimates of the
+    - true state transition matrix M and
+    - true process noise covariance matrix Q.
+
+    A Gaussian 1D kernel with variance ``sigma`` is used.
+    The kernel is applied in the ``time`` space along the first axis of the input array x and y.
+    Therefore it does not represent a multidimensional kernel or a method similar to using Analogs.
+    Note that the sigma is unitless and is measurent in index-positions of the array.
+
+    The underlying Kalman equations are:
+    x(t) = M x(t+dt) + Q
+    y(t) = H x(t) + R
+
+    Parameters
+    ----------
+    x : array-like, shape (T, n)
+        System state over time period of length T, having n states.
+    y : array-like, shape (T, p)
+        Observations of the system state observed over time.
+    H : array-like, shape (p, n)
+        First estimation of the observation matrix that maps the state space to the observation space.
+    R : array-like, shape (p, p)
+        First estimation of the observation noise covariance matrix.
+    nb_iter_SEM : int
+        Number of itterations that shall be performed for the alogithm.
+    sigma : float
+        Standard deviation as the sqrt(variance) of the Gaussian distribution to create the 1D kernel used for the local linear regression.
+        Note that the sigma is unitless and is measurent in index-positions of the array.
+    seed : int, optional
+        Seed for the NumPy random number generator. By providing a seed,
+        you can ensure reproducibility of the random numbers generated.
+        If not specified, a default seed will be used 11.
+
+    Returns
+    -------
+    x_s : array, shape (T, n)
+        Smoothed updated state estimates after assimilating the observations.
+        This represents the state (x) of the system after the final itteration of the algorithm.
+    P_s : array, shape (T, n, n)
+        Smoothed error covariance matrices of the state estimates after assimilating the observations.
+        This represents the error covariance matrices as a function of time after the final itteration of the algorithm.
+    M : array, shape (T, n, n)
+        Estimation of the true time-varying state transition matrix M after the final itteration of the algorithm.
+    tab_loglik : array, shape (nb_iter_SEM)
+        Sum of the log-likelihod over time dimension for each itteration of the algorithm.
+    x_out : array, shape (T, n)
+        Simulated the new state based on a multivariate normal distribution which uses
+        x_s as mean and P_s as Covariance matrix.
+    x_f : array, shape (T, n)
+        Forecasted state estimates after assimilating the observations by the used Kalman Filter, after the final itteration of the algorithm.
+    Q : array shape (T, p, p)
+        Estimation of the true time-varying process noise covariance matrix Q after the final itteration of the algorithm.
+    """
 
     # fix the seed
-    np.random.seed(11)
+    np.random.seed(seed=seed)
 
     # copy x
     x_out = x.copy()
 
     # shapes
-    time_dim = np.shape(x_out)[0]
+    T = np.shape(x_out)[0]
     n = np.shape(x_out)[1]
 
     # tab to store the np.log-likelihood
     tab_loglik = []
 
-    M = np.empty((time_dim, n, n))
+    M = np.empty((T, n, n))
     Q = np.empty_like(M)
 
     # loop on the SEM iterations
     for i in tqdm(np.arange(0, nb_iter_SEM)):
-        # Use a local linear regression to compute M at each timestep.
+        # Use a local linear regression to compute M for each timestep.
         # This is done by using a 1D gaussian kernel centered at the corresponding timestep.
-        for idx in range(0, time_dim):
-            # get the sample weights as 1D gaussian kernel
+        for idx in range(0, T):
+            # Get the sample weights as 1D gaussian kernel based on sigma
             sample_weight = gaussian_kernel_1D(
-                x_out[:-1,], idx, axis=0, same_output_shape=False
+                x_out[:-1,], idx, axis=0, sigma=sigma, same_output_shape=False
             )
             # Kalman parameters for each timestep
             reg = LinearRegression(fit_intercept=False).fit(
