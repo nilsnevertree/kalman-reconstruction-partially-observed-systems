@@ -1,5 +1,5 @@
-""" Timedependent verions of Kalman.py:
-Apply the linear and Gaussian Kalman filter and smoother with timedependent Model M and Model Error Q """
+"""Timedependent verions of Kalman.py: Apply the linear and Gaussian Kalman
+filter and smoother with timedependent Model M and Model Error Q."""
 
 import numpy as np
 import scipy as sp

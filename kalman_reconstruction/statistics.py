@@ -3,8 +3,9 @@ import scipy as sp
 
 
 def my_mean(x):
-    """Calculate the mean of a numpy array using np.mean
-    This functions only purpose is to check the CI workflows of the repository.
+    """
+    Calculate the mean of a numpy array using np.mean This functions only
+    purpose is to check the CI workflows of the repository.
 
     Parameters
     ----------
@@ -16,15 +17,15 @@ def my_mean(x):
     np.ndarray
         Mean of input array x.
         ndim=1
-
     """
 
     return np.mean(x)
 
 
 def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
-    """Creates a Gaussian weights for a 2D-array x centered at positions given by y.
-    The weights will be computed along the specified axis.
+    """
+    Creates a Gaussian weights for a 2D-array x centered at positions given by
+    y. The weights will be computed along the specified axis.
 
     Parameters
     ----------
@@ -43,7 +44,6 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
     np.ndarray
         gaussian weights
         dimension as x
-
     """
     try:
         assert np.array_equal(np.ndim(x), np.ndim(y))
@@ -63,10 +63,11 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
 
 
 def broadcast_along_axis_as(x, y, axis):
-    """Broadcasts 1D array x to an array of same shape as y, containing the given axis.
-    The length of x need to be the same as the length of y along the given axis.
-    Note that this is a broadcast_to, so the return is a view on x.
-    Based on the answer at https://stackoverflow.com/a/62655664/16372843
+    """
+    Broadcasts 1D array x to an array of same shape as y, containing the given
+    axis. The length of x need to be the same as the length of y along the
+    given axis. Note that this is a broadcast_to, so the return is a view on x.
+    Based on the answer at https://stackoverflow.com/a/62655664/16372843.
 
     Parameters
     ----------
@@ -109,7 +110,9 @@ def broadcast_along_axis_as(x, y, axis):
 
 
 def gaussian_kernel_1D(x, center_idx, axis=0, sigma=100, same_output_shape=False):
-    """Creates a Gaussian weights for a N dimensional array x centered at index y along specified axis.
+    """
+    Creates a Gaussian weights for a N dimensional array x centered at index y
+    along specified axis.
 
     Parameters
     ----------
