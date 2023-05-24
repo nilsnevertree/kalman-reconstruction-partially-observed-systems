@@ -9,12 +9,12 @@ def my_mean(x):
 
     Parameters
     ----------
-    x: np.ndarray
+    x: array
         Array for which the mean shall be calculated.
 
     Returns
     -------
-    np.ndarray
+    array
         Mean of input array x.
         ndim=1
     """
@@ -29,10 +29,10 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
 
     Parameters
     ----------
-    x: np.ndarray
+    x: array
         Array of dimension (n, m).
         x.ndim should be 2.
-    y: np.ndarray
+    y: array
         Array of dimension (n, ).
         y.ndim should be 2 or 1.
     alpha: float
@@ -41,7 +41,7 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
 
     Returns
     -------
-    np.ndarray
+    array
         gaussian weights
         dimension as x
     """
@@ -71,16 +71,16 @@ def broadcast_along_axis_as(x, y, axis):
 
     Parameters
     ----------
-    x: np.ndarray
+    x: array
         Array of dimension 1 which should be broadcasted for a specific axis.
-    x: np.ndarray
+    x: array
         Array of dimension 1 which should be broadcasted for a specific axis.
     axis: int
         Axis along which the arrays allign.
 
     Returns
     -------
-    np.ndarray
+    array
         Array containing values along provided axis as x but with shape y.
         Note that this is a broadcast_to, so the return is a view on x.
     """
@@ -114,16 +114,19 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=100, same_output_shape=False
     Creates a Gaussian weights for a N dimensional array x centered at index y
     along specified axis.
 
+    The equation used is:
+    $e^{-{\frac {1}{2}}\left({\frac {x-\center_idx}{\sigma }}\right)^{2}}}$
+
     Parameters
     ----------
-    x: np.ndarray
+    x: array
         Array of dimension N with length l along provided axis.
     center_idx: int
         Index of the center of the gaussian kernel along provided axis.
     axis: int
         Axis along which the weights shall be computed.
     sigma: float
-        sigma of the gaus distribution.
+        Standard deviation as the sqrt(variance) of the gaussian distribution.
         Default to 10
     same_output_shape : bool
         Sets if the output array should be of shape.
@@ -133,7 +136,7 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=100, same_output_shape=False
 
     Returns
     -------
-    np.ndarray
+    array
         Array containing the weights of the kernel.
         If output is 1D, along this axis.
         If output in ND, along provided axis.
@@ -143,7 +146,7 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=100, same_output_shape=False
     index_array = np.arange(x.shape[axis])
 
     # apply the Gaussian kernel
-    kernel = np.exp((-((index_array - center_idx) ** 2)) / (2 * sigma**2))
+    kernel = np.exp(-0.5 * ((index_array - center_idx) ** 2) / (sigma**2))
     kernel = kernel / np.sum(kernel)
     # normalize the weights
     if not same_output_shape:
