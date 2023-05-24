@@ -168,7 +168,7 @@ def run_Kalman_SEM_to_xarray(
             time=ds["time"],
             state_names=observation_variables,
             state_names_copy=observation_variables,
-            kalman_itteration=np.arange(nb_iter_SEM)
+            kalman_itteration=np.arange(nb_iter_SEM),
         )
     )
     # store x_s
@@ -308,6 +308,7 @@ def xarray_Kalman_SEM_time_dependent(
     - state_names_copy: Dimension representing a copy of the state variables.
 
     Output Coordinates:
+    - time: Coordinates corresponding to the time of the input dataset.
     - state_names: Coordinates corresponding to the state variables.
     - state_names_copy: Coordinates corresponding to the copy of the state variables.
     - kalman_itteration: Coordinates representing the Kalman SEM iteration index.
@@ -369,7 +370,7 @@ def xarray_Kalman_SEM_time_dependent(
             time=ds["time"],
             state_names=observation_variables,
             state_names_copy=observation_variables,
-            kalman_itteration=np.arange(nb_iter_SEM)
+            kalman_itteration=np.arange(nb_iter_SEM),
         )
     )
     # store x_s
