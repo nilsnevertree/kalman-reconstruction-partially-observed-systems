@@ -5,53 +5,26 @@ Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman 
 
 ## Project Organization
 ------------
-
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
-
-
+    ├───.github
+    │   └───workflows                           <GitHub workflows>
+    ├───ci                                      <Enviroments for the GitHub workflows>    │
+    ├───data                                    <Data should go here>
+    ├───docs                                    <Documentation>
+    ├───kalman_reconstruction                   <The main library that is build>
+    │   │   cli.py
+    │   │   custom_plot.py                      <Customized plot functions to visualize data>
+    │   │   example_models.py                   <Example numerical models to create data. E.g. Lorenz63 model>
+    │   │   kalman.py                           <Module of Kalman algorithms>
+    │   │   kalman_time_dependent.py            <Module of Kalman algorithms taking timedependency into account (Local Linear Regression)>
+    │   │   pipeline.py                         <Pipeline which encapsuals the Kalman module to be used with xarray see also an example below>
+    │   │   reconstruction.py                   <Module to compute a reconstruction of the Lorenz63 hidden variables from latent variabels>
+    │   │   statistics.py                       <Module containing statistical algorithms>
+    │   │   _version.py
+    │   │   __init__.py
+    │   │   __main__.py
+    ├───notebooks                               <Store notebooks here. A typical format for user ``Adam Bashfort`` on the topic ``stability`` would be 01_AB_stability.ipynb>
+    ├───temporary                               <Folder to store files which shall not be traced.>
+    └───tests
 --------
 
 ## Pipeline Usage
