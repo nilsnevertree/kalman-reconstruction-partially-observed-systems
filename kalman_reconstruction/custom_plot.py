@@ -2,6 +2,98 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def default_rcParams():
+    """
+    Set the default configuration parameters for matplotlib. The colorblind-
+    save colors were choosen with the help of
+    https://davidmathlogic.com/colorblind.
+
+    Returns:
+    --------
+    None
+
+    Note:
+    -----
+    This function modifies the global matplotlib configuration.
+
+    Examples:
+    ---------
+    >>> default_rcParams()
+    """
+
+    # Set default figure size
+    plt.rcParams["figure.figsize"] = (10, 8)
+
+    # Set font sizes
+    MEDIUM_SIZE = 12
+    BIGGER_SIZE = 15
+    HUGHER_SIZE = 18
+    plt.rc("font", size=MEDIUM_SIZE)  # Default text sizes
+    plt.rc("figure", titlesize=HUGHER_SIZE)  # Axes title size
+    plt.rc("figure", labelsize=BIGGER_SIZE)  # X and Y labels size
+    plt.rc("axes", titlesize=BIGGER_SIZE)  # Axes title size
+    plt.rc("axes", labelsize=MEDIUM_SIZE)  # X and Y labels size
+    plt.rc("xtick", labelsize=MEDIUM_SIZE)  # X tick labels size
+    plt.rc("ytick", labelsize=MEDIUM_SIZE)  # Y tick labels size
+    plt.rc("legend", fontsize=MEDIUM_SIZE)  # Legend fontsize
+    plt.rc("figure", titlesize=BIGGER_SIZE)  # Figure title size
+
+    # Set axis spines visibility
+    plt.rc(
+        "axes.spines",
+        **{
+            "left": True,
+            "right": False,
+            "bottom": True,
+            "top": False,
+        },
+    )
+
+    # Set legend location
+    plt.rc("legend", loc="upper right")
+
+    # Use colorblind-safe colors
+    colors = [
+        "#CC6677",
+        "#6E9CB3",
+        "#CA8727",
+        "#44AA99",
+        "#AA4499",
+        "#D6BE49",
+        "#A494F5",
+    ]
+    plt.rcParams["axes.prop_cycle"] = plt.cycler(color=colors)
+
+
+def plot_colors(colors):
+    """
+    Plot a scatter plot of colors.
+
+    Parameters:
+    -----------
+    colors : list
+        List of color values to plot.
+
+    Returns:
+    --------
+    fig : matplotlib.figure.Figure
+        The matplotlib Figure object.
+    axs : matplotlib.axes.Axes
+        The matplotlib Axes object.
+
+    Examples:
+    ---------
+    >>> colors = ['#FF0000', '#00FF00', '#0000FF']
+    >>> fig, axs = plot_colors(colors)
+    """
+    fig, axs = plt.subplots(figsize=(5, 1))
+    for idx, color in enumerate(colors):
+        axs.scatter(idx, 1, c=color, s=300)
+
+    axs.set_yticks([])
+    return fig, axs
+
+
 def plot_state_with_probability(
     ax,
     x_value,
