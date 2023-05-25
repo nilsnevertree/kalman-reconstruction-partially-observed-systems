@@ -5,6 +5,9 @@ from kalman_reconstruction.kalman import Kalman_SEM
 from kalman_reconstruction.kalman_time_dependent import Kalman_SEM_time_dependent
 
 
+# Kalman_Functions
+
+
 def run_Kalman_SEM(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001):
     """
     Run the Kalman Stochastic Expectation-Maximization (SEM) algorithm.
@@ -57,7 +60,7 @@ def run_Kalman_SEM(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001
     return Kalman_SEM(x, y, H, R, nb_iter_SEM)
 
 
-def run_Kalman_SEM_to_xarray(
+def xarray_Kalman_SEM(
     ds,
     state_variables,
     random_variables,
@@ -124,7 +127,7 @@ def run_Kalman_SEM_to_xarray(
 
     Note:
     - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.DataSet was provided using a selection by values or indices, it is suggested to use the expand_dims_coords() function in order to contain the correct values of the dimensions and coordinates.
+    - If your given xr.DataSet was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
     # function to craete new names from key and krn
@@ -327,7 +330,7 @@ def xarray_Kalman_SEM_time_dependent(
 
     Note:
     - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.DataSet was provided using a selection by values or indices, it is suggested to use the expand_dims_coords() function in order to contain the correct values of the dimensions and coordinates.
+    - If your given xr.DataSet was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
     # function to craete new names from key and krn
@@ -414,45 +417,10 @@ def xarray_Kalman_SEM_time_dependent(
     return result
 
 
-def add_random_variable(ds, var_name, random_generator, variance, dim="time"):
-    """
-    Add a random variable to a given xarray dataset.
-
-    Parameters:
-    -----------
-    ds : xarray.Dataset
-        The input dataset to which the random variable will be added.
-    var_name : str
-        The name of the random variable.
-    random_generator : numpy.random.Generator
-        The random number generator to generate the random variable values.
-    variance : float
-        The variance of the random variable.
-    dim : str, optional
-        The dimension along which to add the random variable. Default is "time".
-
-    Returns:
-    --------
-    None
-
-    Notes:
-    ------
-    - The random variable values are generated using the provided `random_generator`
-      by drawing samples from a normal distribution with mean 0 and the specified `variance`.
-    - The random variable is added as a new DataArray to the input dataset `ds`,
-      with the name `var_name` and the specified dimension `dim`.
-    - The coordinates of the added DataArray are set to the coordinate values of the dimension `dim` in `ds`.
-    """
-
-    ds[var_name] = xr.DataArray(
-        data=random_generator.normal(loc=0, scale=variance, size=len(ds[dim])),
-        dims=[dim],
-    )
+# Functions to handle dimensional or coordinate problems:
 
 
-def expand_dims_coords(
-    ds1: xr.Dataset, ds2: xr.Dataset, select_dict: dict
-) -> xr.Dataset:
+def expand_and_assign_coords(ds1, ds2, select_dict={}) -> xr.Dataset:
     """
     Expand dimensions of ds1 and assign coordinates from ds2.
 
@@ -498,7 +466,7 @@ def expand_dims_coords(
 
     >>> select_dict = {'z': 2}
     >>> # Call the function
-    >>> result = expand_dims_coords(ds1, ds2, select_dict)
+    >>> result = expand_and_assign_coords(ds1, ds2, select_dict)
     >>> print(result)
     <xarray.Dataset>
     Dimensions:  (z: 1, x: 10, y: 20)
@@ -521,3 +489,206 @@ def expand_dims_coords(
     ds1_expanded = ds1_expanded.expand_dims(selection_vars)
 
     return ds1_expanded
+
+
+# Functions to add one ore more varibales to a DataSet
+
+
+def add_random_variable(ds, var_name, random_generator, variance, dim="time"):
+    """
+    Add a random variable to a given xarray dataset.
+
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        The input dataset to which the random variable will be added.
+    var_name : str
+        The name of the random variable.
+    random_generator : numpy.random.Generator
+        The random number generator to generate the random variable values.
+    variance : float
+        The variance of the random variable.
+    dim : str, optional
+        The dimension along which to add the random variable. Default is "time".
+
+    Returns:
+    --------
+    None
+
+    Notes:
+    ------
+    - The random variable values are generated using the provided `random_generator`
+      by drawing samples from a normal distribution with mean 0 and the specified `variance`.
+    - The random variable is added as a new DataArray to the input dataset `ds`,
+      with the name `var_name` and the specified dimension `dim`.
+    - The coordinates of the added DataArray are set to the coordinate values of the dimension `dim` in `ds`.
+    """
+
+    ds[var_name] = xr.DataArray(
+        data=random_generator.normal(loc=0, scale=variance, size=len(ds[dim])),
+        dims=[dim],
+    )
+
+
+def create_empty_dataarray(ds1, ds2):
+    """
+    Create an empty DataArray by combining the coordinates from two given
+    datasets or dataarrays.
+
+    Parameters:
+        ds1 (xarray.Dataset or xarray.DataArray): The first dataset.
+        ds2 (xarray.Dataset or xarray.DataArray): The second dataset.
+
+    Returns:
+        xarray.DataArray: An empty DataArray with coordinates from both ds1 and ds2.
+    """
+    coords = {**ds1.coords, **ds2.coords}
+    return xr.DataArray(coords=coords.values(), dims=coords.keys())
+
+
+def add_empty_dataarrays(ds1, ds2, new_dimension):
+    """
+    Add empty data arrays to ds1 for each variable in ds2.
+
+    This function adds empty data arrays to ds1 for each variable in ds2 using the `empty_dataarray_from_two` function.
+    The empty data arrays are constructed based on the dimensions of ds1's new_dimension and ds2's variables.
+
+    Parameters:
+        ds1 (xr.Dataset): The target dataset where empty data arrays will be added.
+        ds2 (xr.Dataset): The source dataset from which variables will be used to construct the empty data arrays.
+        new_dimension (str): The name of the new dimension.
+
+    Returns:
+        None
+
+    Example:
+    >>> ds1 = xr.Dataset(
+        {"var1": (("x", "y"), np.zeros((3, 3)))},
+        coords={"x": [1, 2, 3], "y": [4, 5, 6]}
+    )
+    >>> ds2 = xr.Dataset(
+        {"var2": (("x", "y"), np.ones((3, 3)))},
+        coords={"x": [2, 3, 4], "y": [5, 6, 7]}
+    )
+    >>> new_dimension = "run"
+    >>> add_all_empty_dataarray(ds1, ds2, new_dimension)
+    >>> print(ds1)
+    <xarray.Dataset>
+    Dimensions:  (x: 3, y: 3, run: 1)
+    Coordinates:
+      * x        (x) int64 1 2 3
+      * y        (y) int64 4 5 6
+      * run      (run) int64 0
+    Data variables:
+        var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+        var2     (run, x, y) float64 nan nan nan nan nan nan nan nan nan
+    """
+
+    # Iterate over all variables in ds2
+    for var in ds2.data_vars:
+        # Create an empty data array using empty_dataarray_from_two function
+        empty_dataarray = create_empty_dataarray(ds1[new_dimension], ds2[var])
+        # Assign the empty data array to the corresponding variable in ds1
+        ds1[var] = empty_dataarray
+
+
+def assign_variables_by_selection(ds1: xr.Dataset, ds2: xr.Dataset, select_dict: dict):
+    """
+    Set all variables from ds2 into ds1 at the specified selection coordinates.
+
+    This function assigns the values of all variables from ds2 to the corresponding variables in ds1
+    at the specified selection coordinates defined by select_dict.
+
+    Parameters:
+        ds1 (xr.Dataset): The target dataset where variables will be set.
+        ds2 (xr.Dataset): The source dataset from which variables will be taken.
+        select_dict (dict): Dictionary of selection or index selection containing names and values of the coordinates to select.
+
+    Returns:
+        None
+
+    Example:
+    >>> ds1 = xr.Dataset(
+        {"var1": (("x", "y"), np.zeros((3, 3))), "var2": (("x", "y"), np.ones((3, 3)))},
+        coords={"x": [1, 2, 3], "y": [4, 5, 6]}
+    )
+    >>> ds2 = xr.Dataset(
+        {"var1": (("x", "y"), np.full((3, 3), 2)), "var2": (("x", "y"), np.full((3, 3), 3))},
+        coords={"x": [2, 3, 4], "y": [5, 6, 7]}
+    )
+    >>> select_dict = {"x": 2, "y": 6}
+    >>> set_all_variables_for_selection(ds1, ds2, select_dict)
+    >>> print(ds1)
+    <xarray.Dataset>
+    Dimensions:  (x: 3, y: 3)
+    Coordinates:
+      * x        (x) int64 1 2 3
+      * y        (y) int64 4 5 6
+    Data variables:
+        var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 2.0 0.0 0.0 0.0
+        var2     (x, y) float64 1.0 1.0 1.0 1.0 1.0 3.0 1.0 1.0 1.0
+    """
+
+    # Iterate over all variables in ds2
+    for var in ds2.data_vars:
+        # Assign values from ds2 to corresponding variables in ds1 at the selection coordinates
+        ds1[var].loc[select_dict] = ds2[var].loc[select_dict]
+
+
+#  Functions for Experiments or analysis
+
+
+def multiple_runs_of_func(ds, func, func_kwargs, number_of_runs=2, new_dimension="run"):
+    """
+    Run a function multiple times on a dataset and combine the results into an
+    xarray.Dataset.
+
+    Parameters:
+        ds (xarray.Dataset): The input dataset.
+        func (callable): The function to be executed on the dataset.
+        func_kwargs (dict): Keyword arguments to be passed to the function.
+        number_of_runs (int): The number of times to run the function. Default is 2.
+        new_dimension (str): The name of the new dimension to be added for each run. Default is "run".
+
+    Returns:
+        xarray.Dataset: A dataset containing the results of running the function multiple times.
+
+    Notes:
+        - The function `func` should accept the dataset `ds` as the first argument and the keyword
+          arguments `func_kwargs`.
+        - The function `func` should return an xarray.Dataset.
+    """
+    # Create an empty dataset to store the results
+    result = xr.Dataset({})
+
+    # Assign a new dimension to the dataset
+    result = result.assign_coords({new_dimension: np.arange(number_of_runs)})
+
+    # for the first itteration use the result to create the new coordinates and varibles needed in the output DataSet
+    current_run = 0
+    select_dict = {new_dimension: current_run}
+    # Execute the function on the dataset
+    func_result = func(ds=ds, **func_kwargs)
+    # For the first run, expand the dimensions of the result dataset
+    result = expand_and_assign_coords(ds1=result, ds2=func_result, select_dict={})
+    # Create empty data arrays in the result dataset for each variable in the function result
+    add_empty_dataarrays(ds1=result, ds2=func_result, new_dimension=new_dimension)
+
+    for current_run in range(1, number_of_runs):
+        # Create a dictionary to select the current run
+        select_dict = {new_dimension: current_run}
+
+        # Execute the function on the dataset
+        func_result = func(ds=ds, **func_kwargs)
+
+        # Expand the dimensions of the function result dataset to match the result dataset
+        func_result = expand_and_assign_coords(
+            ds1=func_result, ds2=result, select_dict=select_dict
+        )
+
+        # Assign the values from the function result to the result dataset
+        assign_variables_by_selection(
+            ds1=result, ds2=func_result, select_dict=select_dict
+        )
+
+    return result
