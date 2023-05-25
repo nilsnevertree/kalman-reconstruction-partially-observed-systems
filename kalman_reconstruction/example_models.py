@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 
 from scipy.integrate import solve_ivp
 
@@ -90,3 +91,60 @@ def Lorenz_63(
         args=args,
     )
     return result
+
+
+def Lorenz_63_xarray(
+    time_length=10,
+    time_steps=None,
+    dt=0.01,
+    initial_condition=None,
+    sigma=10,
+    rho=28,
+    beta=8 / 3,
+    method="RK45",
+):
+    """
+    Simulate the Lorenz-63 system.
+
+    Parameters:
+        time_length (float): The total duration of the simulation.
+        time_steps (int): The number of time steps to use for the simulation.
+        dt (float): The time step size.
+        initial_condition (ndarray): The initial condition of the system [x0, y0, z0]. Default is [8, 0, 30].
+        sigma (float): The sigma parameter of the Lorenz-63 system. Default is 10.
+        rho (float): The rho parameter of the Lorenz-63 system. Default is 28.
+        beta (float): The beta parameter of the Lorenz-63 system. Default is 8/3.
+        method (str): The numerical integration method to use. Default is "RK45".
+
+    Returns:
+        scipy.integrate.OdeResult: The solution of the Lorenz-63 system.
+
+    Raises:
+        KeyError: If both `time_length` and `time_steps` are None.
+
+    Example:
+        result = Lorenz_63(time_length=10, dt=0.01, initial_condition=[8, 0, 30], sigma=10, rho=28, beta=8/3)
+        print(result.y)  # Print the state variables [x, y, z] at each time step.
+    """
+    result = Lorenz_63(
+        time_length=time_length,
+        time_steps=time_steps,
+        dt=dt,
+        initial_condition=initial_condition,
+        sigma=sigma,
+        rho=rho,
+        beta=beta,
+        method=method,
+    )
+
+    return xr.Dataset(
+        data_vars=dict(
+            x1=(["time"], result.y[0]),
+            x2=(["time"], result.y[1]),
+            x3=(["time"], result.y[2]),
+        ),
+        coords=dict(
+            time=result.t,
+        ),
+        attrs=dict(description="Lorenz Model."),
+    )
