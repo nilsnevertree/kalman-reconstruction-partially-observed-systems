@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def default_rcParams():
+def set_custom_rcParams():
     """
     Set the default configuration parameters for matplotlib. The colorblind-
     save colors were choosen with the help of
