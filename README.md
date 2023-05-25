@@ -6,24 +6,24 @@ Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman 
 ## Project Organization
 ------------
     ├───.github
-    │   └───workflows                           <GitHub workflows>
-    ├───ci                                      <Enviroments for the GitHub workflows>    │
-    ├───data                                    <Data should go here>
-    ├───docs                                    <Documentation>
-    ├───kalman_reconstruction                   <The main library that is build>
+    │   └───workflows                           <- GitHub workflows
+    ├───ci                                      <- Enviroments for the GitHub workflows
+    ├───data                                    <- Data should go here
+    ├───docs                                    <- Documentation
+    ├───kalman_reconstruction                   <- The main library that is build
     │   │   cli.py
-    │   │   custom_plot.py                      <Customized plot functions to visualize data>
-    │   │   example_models.py                   <Example numerical models to create data. E.g. Lorenz63 model>
-    │   │   kalman.py                           <Module of Kalman algorithms>
-    │   │   kalman_time_dependent.py            <Module of Kalman algorithms taking timedependency into account (Local Linear Regression)>
-    │   │   pipeline.py                         <Pipeline which encapsuals the Kalman module to be used with xarray see also an example below>
-    │   │   reconstruction.py                   <Module to compute a reconstruction of the Lorenz63 hidden variables from latent variabels>
-    │   │   statistics.py                       <Module containing statistical algorithms>
+    │   │   custom_plot.py                      <- Customized plot functions to visualize data
+    │   │   example_models.py                   <- Example numerical models to create data. E.g. Lorenz63 model
+    │   │   kalman.py                           <- Module of Kalman algorithms
+    │   │   kalman_time_dependent.py            <- Module of Kalman algorithms taking timedependency into account (Local Linear Regression)
+    │   │   pipeline.py                         <- Pipeline which encapsuals the Kalman module to be used with xarray see also an example below
+    │   │   reconstruction.py                   <- Module to compute a reconstruction of the Lorenz63 hidden variables from latent variabels
+    │   │   statistics.py                       <- Module containing statistical algorithms
     │   │   _version.py
     │   │   __init__.py
     │   │   __main__.py
-    ├───notebooks                               <Store notebooks here. A typical format for user ``Adam Bashfort`` on the topic ``stability`` would be 01_AB_stability.ipynb>
-    ├───temporary                               <Folder to store files which shall not be traced.>
+    ├───notebooks                               <- Store notebooks here. A typical format for user ``Adam Bashfort`` on the topic ``stability`` would be 01_AB_stability.ipynb
+    ├───temporary                               <- Folder to store files which shall not be traced.
     └───tests
 --------
 
