@@ -57,7 +57,7 @@ def run_Kalman_SEM(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001
     return Kalman_SEM(x, y, H, R, nb_iter_SEM)
 
 
-def run_Kalman_SEM_to_xarray(
+def xarray_Kalman_SEM(
     ds,
     state_variables,
     random_variables,
