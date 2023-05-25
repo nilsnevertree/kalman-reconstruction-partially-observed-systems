@@ -633,3 +633,62 @@ def assign_variables_by_selection(ds1: xr.Dataset, ds2: xr.Dataset, select_dict:
     for var in ds2.data_vars:
         # Assign values from ds2 to corresponding variables in ds1 at the selection coordinates
         ds1[var].loc[select_dict] = ds2[var].loc[select_dict]
+
+
+#  Functions for Experiments or analysis
+
+
+def multiple_runs_of_func(ds, func, func_kwargs, number_of_runs=2, new_dimension="run"):
+    """
+    Run a function multiple times on a dataset and combine the results into an
+    xarray.Dataset.
+
+    Parameters:
+        ds (xarray.Dataset): The input dataset.
+        func (callable): The function to be executed on the dataset.
+        func_kwargs (dict): Keyword arguments to be passed to the function.
+        number_of_runs (int): The number of times to run the function. Default is 2.
+        new_dimension (str): The name of the new dimension to be added for each run. Default is "run".
+
+    Returns:
+        xarray.Dataset: A dataset containing the results of running the function multiple times.
+
+    Notes:
+        - The function `func` should accept the dataset `ds` as the first argument and the keyword
+          arguments `func_kwargs`.
+        - The function `func` should return an xarray.Dataset.
+    """
+    # Create an empty dataset to store the results
+    result = xr.Dataset({})
+
+    # Assign a new dimension to the dataset
+    result = result.assign_coords({new_dimension: np.arange(number_of_runs)})
+
+    # for the first itteration use the result to create the new coordinates and varibles needed in the output DataSet
+    current_run = 0
+    select_dict = {new_dimension: current_run}
+    # Execute the function on the dataset
+    func_result = func(ds=ds, **func_kwargs)
+    # For the first run, expand the dimensions of the result dataset
+    result = expand_and_assign_coords(ds1=result, ds2=func_result, select_dict={})
+    # Create empty data arrays in the result dataset for each variable in the function result
+    add_empty_dataarrays(ds1=result, ds2=func_result, new_dimension=new_dimension)
+
+    for current_run in range(1, number_of_runs):
+        # Create a dictionary to select the current run
+        select_dict = {new_dimension: current_run}
+
+        # Execute the function on the dataset
+        func_result = func(ds=ds, **func_kwargs)
+
+        # Expand the dimensions of the function result dataset to match the result dataset
+        func_result = expand_and_assign_coords(
+            ds1=func_result, ds2=result, select_dict=select_dict
+        )
+
+        # Assign the values from the function result to the result dataset
+        assign_variables_by_selection(
+            ds1=result, ds2=func_result, select_dict=select_dict
+        )
+
+    return result
