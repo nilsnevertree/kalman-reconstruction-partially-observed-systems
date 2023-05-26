@@ -244,3 +244,52 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=100, same_output_shape=False
         return kernel
     else:
         return broadcast_along_axis_as(kernel, x, axis=axis)
+
+
+def ordered_like(a, b):
+    """
+    Sorts the elements in list 'a' based on their presence in list 'b' while
+    preserving the order.
+
+    Args:
+        a (list): The list of elements to be sorted.
+        b (list): The reference list used for sorting 'a'.
+
+    Returns:
+        list: A new list containing the elements from 'a' sorted based on their presence in 'b'.
+
+    Example:
+        a = ["x2", "x3"]
+        b = ["x2", "z1", "x3", "z2"]
+        result = ordered_like(a, b)
+        print(result)
+        # Output: ['x2', 'x3', 'z1', 'z2']
+    """
+    return sorted(a, key=lambda x: (x not in b, b.index(x) if x in b else False))
+
+
+def assert_ordered_subset(a, b):
+    """
+    Asserts that list 'a' is a subset of list 'b' and that the elements in 'a'
+    are ordered like in 'b'.
+
+    Args:
+        a (list): The list to be checked as a subset.
+        b (list): The reference list used for the assertion.
+
+    Raises:
+        AssertionError: If 'a' is not a subset of 'b' or if the elements in 'a' are not ordered like in 'b'.
+
+    Example:
+        a = ["x2", "x3"]
+        b = ["x2", "x1", "x3", "x4"]
+        assert_ordered_subset(a, b)
+        # No exception raised
+
+        a = ["x2", "x3"]
+        b = ["x3", "x1", "x2", "x4"]
+        assert_ordered_subset(a, b)
+        # AssertionError: a is not ordered like of b
+    """
+    assert set(a).issubset(b), "a is not a subset of b"
+    assert a == [x for x in b if x in a], "a is not ordered like of b"
