@@ -104,7 +104,7 @@ def xarray_Kalman_SEM(
     an xarray Dataset.
 
     This function applies the Kalman_SEM algorithm on the specified observations and random variables in the given xarray dataset.
-    It performs a specified number of iterations and computes the state estimates, uncertainties, transition matrix, and
+    It performs a specified number of iterations and computes the state estimates, covariance, transition matrix, and
     process noise covariance matrix. The results are stored in a new xarray dataset.
 
     Uses the run_Kalman_SEM() algorithm.
@@ -147,7 +147,7 @@ def xarray_Kalman_SEM(
     Output Variables:
     - states<suffix>: DataArray containing the estimated states over time.
         - Dimensions: time, state_name
-    - uncertainties<suffix>: DataArray containing the uncertainties of the estimated states over time.
+    - covariance<suffix>: DataArray containing the covariance of the estimated states over time.
         - Dimensions: time, state_name, state_name_copy
     - M<suffix>: DataArray containing the transition matrix M.
         - Dimensions: state_name, state_name_copy
@@ -214,7 +214,7 @@ def xarray_Kalman_SEM(
         dims=["time", "state_name"],
     )
     # store P_s
-    new_var = join_names(["uncertainties", suffix])
+    new_var = join_names(["covariance", suffix])
     result[new_var] = xr.DataArray(
         data=P_s,
         dims=["time", "state_name", "state_name_copy"],
@@ -255,7 +255,7 @@ def xarray_Kalman_SEM_time_dependent(
     an xarray Dataset.
 
     This function applies the Kalman_SEM algorithm on the specified observations and random variables in the given xarray dataset.
-    It performs a specified number of iterations and computes the state estimates, uncertainties, transition matrix, and
+    It performs a specified number of iterations and computes the state estimates, covariance, transition matrix, and
     process noise covariance matrix. The results are stored in a new xarray dataset.
 
     Uses the run_Kalman_SEM() algorithm.
@@ -298,7 +298,7 @@ def xarray_Kalman_SEM_time_dependent(
     Output Variables:
     - states<suffix>: DataArray containing the estimated states over time.
         - Dimensions: time, state_name
-    - uncertainties<suffix>: DataArray containing the uncertainties of the estimated states over time.
+    - covariance<suffix>: DataArray containing the covariance of the estimated states over time.
         - Dimensions: time, state_name, state_name_copy
     - M<suffix>: DataArray containing the transition matrix M.
         - Dimensions: state_name, state_name_copy
@@ -367,7 +367,7 @@ def xarray_Kalman_SEM_time_dependent(
         dims=["time", "state_name"],
     )
     # store P_s
-    new_var = join_names(["uncertainties", suffix])
+    new_var = join_names(["covariance", suffix])
     result[new_var] = xr.DataArray(
         data=P_s,
         dims=["time", "state_name", "state_name_copy"],
