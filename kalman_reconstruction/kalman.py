@@ -63,12 +63,12 @@ def Kalman_filter(y, x0, P0, M, Q, H, R):
     T, p = np.shape(y)
 
     # Kalman initialization
-    x_f = np.empty((T, n))  # forecast state
-    P_f = np.empty((T, n, n))  # forecast error covariance matrix
-    x_a = np.empty((T, n))  # analysed state
-    P_a = np.empty((T, n, n))  # analysed error covariance matrix
-    loglik = np.empty((T))  # np.log-likelihood
-    K_a = np.empty((T, n, p))  # analysed Kalman gain
+    x_f = np.zeros((T, n))  # forecast state
+    P_f = np.zeros((T, n, n))  # forecast error covariance matrix
+    x_a = np.zeros((T, n))  # analysed state
+    P_a = np.zeros((T, n, n))  # analysed error covariance matrix
+    loglik = np.zeros((T))  # np.log-likelihood
+    K_a = np.zeros((T, n, p))  # analysed Kalman gain
     x_a[0, :] = x0
     P_a[0, :, :] = P0
 
@@ -152,9 +152,9 @@ def Kalman_smoother(y, x0, P0, M, Q, H, R):
     T, p = np.shape(y)
 
     # Kalman initialization
-    x_s = np.empty((T, n))  # smoothed state
-    P_s = np.empty((T, n, n))  # smoothed error covariance matrix
-    P_s_lag = np.empty((T - 1, n, n))  # smoothed lagged error covariance matrix
+    x_s = np.zeros((T, n))  # smoothed state
+    P_s = np.zeros((T, n, n))  # smoothed error covariance matrix
+    P_s_lag = np.zeros((T - 1, n, n))  # smoothed lagged error covariance matrix
 
     # apply the Kalman filter
     x_f, P_f, x_a, P_a, loglik, K_a = Kalman_filter(y, x0, P0, M, Q, H, R)
@@ -293,7 +293,7 @@ def Kalman_SEM(x, y, H, R, nb_iter_SEM):  # , x_t, t):
 
         # Kalman initialization
         if i == 0:
-            x0 = np.empty(n)
+            x0 = np.zeros(n)
             P0 = np.eye(n)
         else:
             x0 = x_s[0, :]
@@ -338,7 +338,7 @@ def Kalman_SEM_bis(x, y, H, R, nb_iter_SEM, M_init, Q_init):
     for i in tqdm(np.arange(0, nb_iter_SEM)):
         # Kalman initialization
         if i == 0:
-            x0 = np.empty(n)
+            x0 = np.zeros(n)
             P0 = np.eye(n)
             M = M_init
             Q = Q_init
@@ -356,13 +356,13 @@ def Kalman_SEM_bis(x, y, H, R, nb_iter_SEM, M_init, Q_init):
         )
 
         # update the Kalman parameters
-        A = np.empty((n, n))
+        A = np.zeros((n, n))
         for k in np.arange(0, T - 1):
             A += P_s[k, :, :] + np.array([x_s[k, :]]).T @ np.array([x_s[k, :]])
-        B = np.empty((n, n))
+        B = np.zeros((n, n))
         for k in np.arange(0, T - 1):
             B += P_s_lag[k, :, :] + np.array([x_s[k + 1, :]]).T @ np.array([x_s[k, :]])
-        C = np.empty((n, n))
+        C = np.zeros((n, n))
         for k in np.arange(0, T - 1):
             C += P_s[k + 1, :, :] + np.array([x_s[k + 1, :]]).T @ np.array(
                 [x_s[k + 1, :]]
@@ -388,14 +388,14 @@ def ensemble_Kalman_filter(y, x0, P0, m, Q, H, R, Ne):
     T, p = np.shape(y)
 
     # Kalman initialization
-    x_f = np.empty((T, n))  # forecast state
-    P_f = np.empty((T, n, n))  # forecast error covariance matrix
-    x_a = np.empty((T, n))  # analysed state
-    P_a = np.empty((T, n, n))  # analysed error covariance matrix
-    loglik = np.empty((T))  # np.log-likelihood
-    x_f_tmp = np.empty((n, Ne))  # members of the forecast
-    y_f_tmp = np.empty((p, Ne))  # members of the perturbed observations
-    x_a_tmp = np.empty((n, Ne))  # members of the analysis
+    x_f = np.zeros((T, n))  # forecast state
+    P_f = np.zeros((T, n, n))  # forecast error covariance matrix
+    x_a = np.zeros((T, n))  # analysed state
+    P_a = np.zeros((T, n, n))  # analysed error covariance matrix
+    loglik = np.zeros((T))  # np.log-likelihood
+    x_f_tmp = np.zeros((n, Ne))  # members of the forecast
+    y_f_tmp = np.zeros((p, Ne))  # members of the perturbed observations
+    x_a_tmp = np.zeros((n, Ne))  # members of the analysis
     x_a_tmp = np.random.multivariate_normal(np.squeeze(x0), P0, Ne).T
     x_a[0, :] = np.mean(x_a_tmp, 1)
     P_a[0, :, :] = np.cov(x_a_tmp)
@@ -405,10 +405,10 @@ def ensemble_Kalman_filter(y, x0, P0, m, Q, H, R, Ne):
         # prediction step
         for i in range(Ne):
             x_f_tmp[:, i] = m(x_a_tmp[:, i]) + np.random.multivariate_normal(
-                np.empty(n), Q
+                np.zeros(n), Q
             )
             y_f_tmp[:, i] = H @ x_f_tmp[:, i] + np.random.multivariate_normal(
-                np.empty(p), R
+                np.zeros(p), R
             )
         P_f[k, :, :] = np.cov(x_f_tmp)
 
