@@ -8,25 +8,26 @@ from kalman_reconstruction.kalman_time_dependent import Kalman_SEM_time_dependen
 # Kalman_Functions
 
 
-def input_arrays_combined(random_list: list, observation_list: list) -> tuple:
+def input_arrays_combined(observation_list: list, random_list: list) -> tuple:
     """
     Create input arrays of observations (y) and states (x) for the
-    Kalman_algorithms. The state is a combination of the observation_list and
-    the random_list, where the varibaels in teh random_list follow the
-    observation_list.
+    Kalman_algorithms. The state is a concatenation of the observation
+    variables followed by the random variabels.
 
     Note:
-    - The state variables (x) will be the combination of the variables in the observation_list and random_list.
+    - All arrays in the list must be 1D and of equal length T.
 
     Parameters:
-        random_list (list): List of latent variables that are appended to the observations and create the state.
-        observation_list (list): List of observed variables.
+        observation_list (list) len(p): List of observation variables.
+        random_list (list) len(r): List of latent variables that shall be appended.
 
     Returns:
-        tuple: A tuple containing the input arrays (state, observations) for the Kalman_algorithms.
+        tuple : A tuple containing the input arrays for the Kalman_algorithms.
+            - states : np.ndarray shape(T, p+r),
+            - observations : np.ndarray shape(T, p)
     """
     states, observations = input_arrays(
-        observation_list=observation_list, state_list=observation_list + random_list
+        state_list=observation_list + random_list, observation_list=observation_list
     )
     return states, observations
 
@@ -36,12 +37,17 @@ def input_arrays(state_list: list, observation_list: list) -> tuple:
     Create input arrays of observations (y) and states (x) for the
     Kalman_algorithms.
 
+    Note:
+    - All arrays in the list must be 1D and of equal length T.
+
     Parameters:
-        state_list (list): List of state variables.
-        observation_list (list): List of observed variables.
+        state_list (list) len(n): List of state variables.
+        observation_list (list) len(p): List of observed variables.
 
     Returns:
-        tuple: A tuple containing the input arrays (state, observations) for the Kalman_algorithms.
+        tuple : A tuple containing the input arrays for the Kalman_algorithms.
+            - states : np.ndarray shape(T, n),
+            - observations : np.ndarray shape(T, p)
     """
     observations = np.array(observation_list).T
     states = np.array(
@@ -62,84 +68,36 @@ def input_matrices_H_R(
     H will only contain values of 1 at corresponding positions
 
     Parameters:
-        states (ndarray): Array of state variables.
-        observations (ndarray): Array of observation variables.
+        states (ndarray) shape(T,n): Array of state variables.
+        observations (ndarray) shape(T,p): Array of observation variables.
         variance_obs_comp (float): Variance of observation component. Default to 0.0001.
         axis (float): axis along which the number of variables is defined. Default to 1.
 
     Returns:
         tuple: A tuple containing the input matrices (H, R).
+        - H : np.ndarray, shape (p, n)
+            First estimation of the observation matrix that maps the state space to the observation space.
+        - R : np.ndarray, shape (p, p)
+            First estimation of the observation noise covariance matrix.
     """
     # shapes
     n = np.shape(states)[axis]
     p = np.shape(observations)[axis]
 
     # kalman parameters
-    H = np.append(np.eye(p), np.zeros((p, n)), axis=1)[:, 0:n]
+    H = np.append(np.eye(p), np.zeros((p, n)), axis=axis)[:, 0:n]
     R = variance_obs_comp * np.eye(p)
 
     return H, R
 
 
-def run_Kalman_SEM(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001):
-    """
-    Run the Kalman Stochastic Expectation-Maximization (SEM) algorithm.
-
-    Parameters:
-    ----------
-    y_list : list
-        List of observed variables.
-        Varibales need to be 1D numpy arrays.
-    random_list : list
-        List of random variables.
-        Varibales need to be 1D numpy arrays.
-    nb_iter_SEM : int
-        Number of iterations for the SEM algorithm.
-        Default is 30.
-    variance_obs_comp :float
-        Variance of observation components.
-        Default is 0.0001.
-
-    Returns:
-    ----------
-    tuple :
-        A tuple containing the following elements:
-        - x_s (ndarray): Array of estimated states with shape (T, n), where T is the number of time steps and n is the number of states.
-        - P_s (ndarray): Array of estimated state uncertainties with shape (T, n, n).
-        - M (ndarray): Array of estimated state transition matrix with shape (n, n).
-        - log_likelihood (float): Log-likelihood of the estimated model.
-        - x (ndarray): Array of estimated states for each iteration with shape (nb_iter_SEM, T, n).
-        - x_f (ndarray): Array of forecasted states for each iteration with shape (nb_iter_SEM, T, n).
-        - Q (ndarray): Array of estimated process noise covariance matrix with shape (n, n).
-
-    Note:
-    ----------
-        - The input arrays y_list and random_list should have the same length and represent the observed variables and random variables, respectively.
-    """
-    # state
-    y = np.array(y_list).T
-    x_list = y_list + random_list
-    x = np.array(x_list).T
-
-    # shapes
-    n = np.shape(x)[1]
-    p = np.shape(y)[1]
-
-    # kalman parameters
-    H = np.append(np.eye(p), np.zeros((p, n)), axis=1)[:, 0:n]
-    R = variance_obs_comp * np.eye(p)
-
-    # stochastic EM
-    return Kalman_SEM(x, y, H, R, nb_iter_SEM)
-
-
 def xarray_Kalman_SEM(
-    ds,
-    state_variables,
-    random_variables,
-    nb_iter_SEM=30,
-    variance_obs_comp=0.0001,
-    suffix="",
+    ds: xr.Dataset,
+    observation_variables: list,
+    random_variables: list,
+    nb_iter_SEM: int = 30,
+    variance_obs_comp: float = 0.0001,
+    suffix: str = "",
 ):
     """
     Run the Kalman SEM algorithm on the input dataset and return the results in
@@ -203,19 +161,26 @@ def xarray_Kalman_SEM(
     - If your given xr.DataSet was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
-    # function to craete new names from key and krn
+    # create list of observation varibales
+    state_variables = list(observation_variables) + list(random_variables)
+
+    # function to craete new names from a list of strings
     join_names = lambda l: "".join(l)
 
-    observation_variables = list(state_variables) + list(random_variables)
-
     # create a list of numpy array to be used for the Kalman itteration
-    y_list = []
+    observation_list = []
     random_list = []
-    for var in state_variables:
-        y_list.append(ds[var].values.flatten())
+    for var in observation_variables:
+        observation_list.append(ds[var].values.flatten())
     for var in random_variables:
         random_list.append(ds[var].values.flatten())
 
+    states, observations = input_arrays_combined(
+        observation_list=observation_list, random_list=random_list
+    )
+    H, R = input_matrices_H_R(
+        states=states, observations=observations, variance_obs_comp=variance_obs_comp
+    )
     # ---------------
     # run the Kalman_SEM algorithm
     # ---------------
@@ -227,12 +192,7 @@ def xarray_Kalman_SEM(
         x,
         x_f,
         Q,
-    ) = run_Kalman_SEM(
-        y_list=y_list,
-        random_list=random_list,
-        nb_iter_SEM=nb_iter_SEM,
-        variance_obs_comp=variance_obs_comp,
-    )
+    ) = Kalman_SEM(x=states, y=observations, H=H, R=R, nb_iter_SEM=nb_iter_SEM)
 
     # ---------------
     # create result dataset in which to store the whole lists
@@ -242,8 +202,8 @@ def xarray_Kalman_SEM(
     result = result.assign_coords(
         dict(
             time=ds["time"],
-            state_names=observation_variables,
-            state_names_copy=observation_variables,
+            state_names=state_variables,
+            state_names_copy=state_variables,
             kalman_itteration=np.arange(nb_iter_SEM),
         )
     )
@@ -282,66 +242,9 @@ def xarray_Kalman_SEM(
     return result
 
 
-def run_Kalman_SEM_time_dependent(
-    y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001, sigma=50
-):
-    """
-    Run the Kalman Stochastic Expectation-Maximization (SEM) algorithm.
-
-    Parameters:
-    ----------
-    y_list : list
-        List of observed variables.
-        Varibales need to be 1D numpy arrays.
-    random_list : list
-        List of random variables.
-        Varibales need to be 1D numpy arrays.
-    nb_iter_SEM : int
-        Number of iterations for the SEM algorithm.
-        Default is 30.
-    variance_obs_comp :float
-        Variance of observation components.
-        Default is 0.0001.
-    sigma : float
-        Standard deviation as the sqrt(variance) of the Gaussian distribution to create the 1D kernel used for the local linear regression in the Kalman_SEM_time_dependent algorithm.
-        Note that the sigma is unitless and is measurent in index-positions of the array.
-
-    Returns:
-    ----------
-    tuple :
-        A tuple containing the following elements:
-        - x_s (ndarray): Array of estimated states with shape (T, n), where T is the number of time steps and n is the number of states.
-        - P_s (ndarray): Array of estimated state uncertainties with shape (T, n, n).
-        - M (ndarray): Array of estimated state transition matrix with shape (T, n, n).
-        - log_likelihood (float): Log-likelihood of the estimated model.
-        - x (ndarray): Array of estimated states for each iteration with shape (nb_iter_SEM, T, n).
-        - x_f (ndarray): Array of forecasted states for each iteration with shape (nb_iter_SEM, T, n).
-        - Q (ndarray): Array of estimated process noise covariance matrix with shape (T, n, n).
-
-    Note:
-    ----------
-        - The input arrays y_list and random_list should have the same length and represent the observed variables and random variables, respectively.
-    """
-    # state
-    y = np.array(y_list).T
-    x_list = y_list + random_list
-    x = np.array(x_list).T
-
-    # shapes
-    n = np.shape(x)[1]
-    p = np.shape(y)[1]
-
-    # kalman parameters
-    H = np.append(np.eye(p), np.zeros((p, n)), axis=1)[:, 0:n]
-    R = variance_obs_comp * np.eye(p)
-
-    # stochastic EM
-    return Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM)
-
-
 def xarray_Kalman_SEM_time_dependent(
     ds,
-    state_variables,
+    observation_variables,
     random_variables,
     nb_iter_SEM=30,
     variance_obs_comp=0.0001,
@@ -409,19 +312,26 @@ def xarray_Kalman_SEM_time_dependent(
     - If your given xr.DataSet was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
-    # function to craete new names from key and krn
+    # create list of observation varibales
+    state_variables = list(observation_variables) + list(random_variables)
+
+    # function to craete new names from a list of strings
     join_names = lambda l: "".join(l)
 
-    observation_variables = list(state_variables) + list(random_variables)
-
     # create a list of numpy array to be used for the Kalman itteration
-    y_list = []
+    observation_list = []
     random_list = []
-    for var in state_variables:
-        y_list.append(ds[var].values.flatten())
+    for var in observation_variables:
+        observation_list.append(ds[var].values.flatten())
     for var in random_variables:
         random_list.append(ds[var].values.flatten())
 
+    states, observations = input_arrays_combined(
+        observation_list=observation_list, random_list=random_list
+    )
+    H, R = input_matrices_H_R(
+        states=states, observations=observations, variance_obs_comp=variance_obs_comp
+    )
     # ---------------
     # run the Kalman_SEM algorithm
     # ---------------
@@ -433,12 +343,10 @@ def xarray_Kalman_SEM_time_dependent(
         x,
         x_f,
         Q,
-    ) = run_Kalman_SEM_time_dependent(
-        y_list=y_list,
-        random_list=random_list,
-        nb_iter_SEM=nb_iter_SEM,
-        variance_obs_comp=variance_obs_comp,
+    ) = Kalman_SEM_time_dependent(
+        x=states, y=observations, H=H, R=R, nb_iter_SEM=nb_iter_SEM
     )
+
     # ---------------
     # create result dataset in which to store the whole lists
     # ---------------
@@ -447,8 +355,8 @@ def xarray_Kalman_SEM_time_dependent(
     result = result.assign_coords(
         dict(
             time=ds["time"],
-            state_names=observation_variables,
-            state_names_copy=observation_variables,
+            state_names=state_variables,
+            state_names_copy=state_variables,
             kalman_itteration=np.arange(nb_iter_SEM),
         )
     )
