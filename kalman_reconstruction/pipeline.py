@@ -5,6 +5,7 @@ import xarray as xr
 
 from kalman_reconstruction.kalman import Kalman_filter, Kalman_SEM, Kalman_smoother
 from kalman_reconstruction.kalman_time_dependent import Kalman_SEM_time_dependent
+from kalman_reconstruction.statistics import assert_ordered_subset, ordered_like
 
 
 # Kalman_Functions
@@ -168,7 +169,7 @@ def xarray_Kalman_filter(
     Parameters
     ----------
     ds : xarray.Dataset
-        Input dataset containing the state and random variables.
+        Input dataset containing the state and state variables.
     state_variables : list len(n)
         List of state variables to be used in the Kalman filter.
     observation_variables : list len(p)
@@ -360,7 +361,7 @@ def xarray_Kalman_smoother(
     Parameters
     ----------
     ds : xarray.Dataset
-        Input dataset containing the state and random variables.
+        Input dataset containing the state and state variables.
     state_variables : list len(n)
         List of state variables to be used.
     observation_variables : list len(p)
@@ -547,7 +548,7 @@ def xarray_Kalman_smoother(
 def xarray_Kalman_SEM(
     ds: xr.Dataset,
     observation_variables: Iterable[str],
-    random_variables: Iterable[str],
+    state_variables: Iterable[str],
     nb_iter_SEM: int = 30,
     variance_obs_comp: float = 0.0001,
     suffix: str = "",
@@ -556,20 +557,21 @@ def xarray_Kalman_SEM(
     Run the Kalman SEM algorithm on the input dataset and return the results in
     an xarray Dataset.
 
-    This function applies the Kalman_SEM algorithm on the specified observations and random variables in the given xarray dataset.
+    This function applies the Kalman_SEM algorithm on the specified observations and state variables in the given xarray dataset.
     It performs a specified number of iterations and computes the state estimates, covariance, transition matrix, and
     process noise covariance matrix. The results are stored in a new xarray dataset.
 
-    Uses the run_Kalman_SEM() algorithm.
+    Note:
+    - The state_varianbles can contain latent variables which are not found in the observation_variables
 
     Parameters
     ----------
     ds : xarray.Dataset
-        Input dataset containing the state and random variables.
-    observation_variables : list
+        Input dataset containing the state and state variables.
+    observation_variables : list len(p)
         List of observed variables to be used in the Kalman SEM algorithm.
-    random_variables : list
-        List of random variables to be used in the Kalman SEM algorithm.
+    state_variables : list len(n)
+        List of state variables to be used in the Kalman SEM algorithm.
     nb_iter_SEM : int, optional
         Number of iterations for the Kalman SEM algorithm.
         Default is 30.
@@ -614,23 +616,26 @@ def xarray_Kalman_SEM(
     - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
-    # create list of observation varibales
-    state_variables = list(observation_variables) + list(random_variables)
-
     # function to craete new names from a list of strings
     join_names = lambda l: "".join(l)
 
+    # make sure that the variables in observation_variables are in same order as in state_variables
+    state_variables = ordered_like(state_variables, observation_variables)
+    # check that state_variables is a subset sorted like observation_variables
+    assert_ordered_subset(observation_variables, state_variables)
+
     # create a list of numpy array to be used for the Kalman itteration
     observation_list = []
-    random_list = []
+    state_list = []
     for var in observation_variables:
         observation_list.append(ds[var].values.flatten())
-    for var in random_variables:
-        random_list.append(ds[var].values.flatten())
+    for var in state_variables:
+        state_list.append(ds[var].values.flatten())
 
-    states, observations = input_arrays_combined(
-        observation_list=observation_list, random_list=random_list
+    states, observations = input_arrays(
+        state_list=state_list, observation_list=observation_list
     )
+
     H, R = input_matrices_H_R(
         states=states, observations=observations, variance_obs_comp=variance_obs_comp
     )
@@ -697,30 +702,31 @@ def xarray_Kalman_SEM(
 def xarray_Kalman_SEM_time_dependent(
     ds: xr.Dataset,
     observation_variables: Iterable[str],
-    random_variables: Iterable[str],
+    state_variables: Iterable[str],
     nb_iter_SEM: int = 30,
     variance_obs_comp: float = 0.0001,
     sigma=10,
     suffix: str = "",
 ) -> xr.Dataset:
     """
-    Run the Kalman SEM algorithm on the input dataset and return the results in
-    an xarray Dataset.
+    Run the time dependent Kalman SEM algorithm on the input dataset and return
+    the results in an xarray Dataset.
 
-    This function applies the Kalman_SEM algorithm on the specified observations and random variables in the given xarray dataset.
+    This function applies the Kalman_SEM_time_dependent algorithm on the specified observations and state variables in the given xarray dataset.
     It performs a specified number of iterations and computes the state estimates, covariance, transition matrix, and
     process noise covariance matrix. The results are stored in a new xarray dataset.
 
-    Uses the run_Kalman_SEM() algorithm.
+    Note:
+    - The state_varianbles can contain latent variables which are not found in the observation_variables
 
     Parameters
     ----------
     ds : xarray.Dataset
-        Input dataset containing the state and random variables.
-    observation_variables : list
+        Input dataset containing the state and state variables.
+    observation_variables : list len(p)
         List of observed variables to be used in the Kalman SEM algorithm.
-    random_variables : list
-        List of random variables to be used in the Kalman SEM algorithm.
+    state_variables : list len(n)
+        List of state variables to be used in the Kalman SEM algorithm.
     nb_iter_SEM : int, optional
         Number of iterations for the Kalman SEM algorithm.
         Default is 30.
@@ -741,9 +747,9 @@ def xarray_Kalman_SEM_time_dependent(
         Dimensions are:
 
     Output Dimensions:
-    - time: The time dimension of the input dataset.
-    - state_name: Dimension representing the state variables.
-    - state_name_copy: Dimension representing a copy of the state variables.
+    - time: The time dimension of the input dataset. shape(t)
+    - state_name: Dimension representing the state variables. shape(n)
+    - state_name_copy: Dimension representing a copy of the state variables. shape(n)
 
     Output Coordinates:
     - time: Coordinates corresponding to the time of the input dataset.
@@ -768,22 +774,24 @@ def xarray_Kalman_SEM_time_dependent(
     - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
-    # create list of observation varibales
-    state_variables = list(observation_variables) + list(random_variables)
-
     # function to craete new names from a list of strings
     join_names = lambda l: "".join(l)
 
+    # make sure that the variables in observation_variables are in same order as in state_variables
+    state_variables = ordered_like(state_variables, observation_variables)
+    # check that state_variables is a subset sorted like observation_variables
+    assert_ordered_subset(observation_variables, state_variables)
+
     # create a list of numpy array to be used for the Kalman itteration
     observation_list = []
-    random_list = []
+    state_list = []
     for var in observation_variables:
         observation_list.append(ds[var].values.flatten())
-    for var in random_variables:
-        random_list.append(ds[var].values.flatten())
+    for var in state_variables:
+        state_list.append(ds[var].values.flatten())
 
-    states, observations = input_arrays_combined(
-        observation_list=observation_list, random_list=random_list
+    states, observations = input_arrays(
+        state_list=state_list, observation_list=observation_list
     )
     H, R = input_matrices_H_R(
         states=states, observations=observations, variance_obs_comp=variance_obs_comp
