@@ -700,6 +700,7 @@ def xarray_Kalman_SEM_time_dependent(
     random_variables: Iterable[str],
     nb_iter_SEM: int = 30,
     variance_obs_comp: float = 0.0001,
+    sigma=10,
     suffix: str = "",
 ) -> xr.Dataset:
     """
@@ -799,7 +800,12 @@ def xarray_Kalman_SEM_time_dependent(
         x_f,
         Q,
     ) = Kalman_SEM_time_dependent(
-        x=states, y=observations, H=H, R=R, nb_iter_SEM=nb_iter_SEM
+        x=states,
+        y=observations,
+        H=H,
+        R=R,
+        nb_iter_SEM=nb_iter_SEM,
+        sigma=sigma,
     )
 
     # ---------------
