@@ -1,4 +1,9 @@
-from typing import Callable, Dict, Tuple
+from typing import (
+    Callable, 
+    Dict, 
+    Tuple,
+    Iterable,
+)
 
 import numpy as np
 import xarray as xr
@@ -11,7 +16,7 @@ from kalman_reconstruction.kalman_time_dependent import Kalman_SEM_time_dependen
 
 
 def input_arrays_combined(
-    observation_list: list, random_list: list
+    observation_list: Iterable[np.ndarray], random_list: Iterable[np.ndarray]
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create input arrays of observations (y) and states (x) for the
@@ -37,7 +42,7 @@ def input_arrays_combined(
 
 
 def input_arrays(
-    state_list: list, observation_list: list
+    state_list: Iterable[np.ndarray], observation_list: Iterable[np.ndarray]
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create input arrays of observations (y) and states (x) for the
@@ -99,8 +104,8 @@ def input_matrices_H_R(
 
 def xarray_Kalman_SEM(
     ds: xr.Dataset,
-    observation_variables: list,
-    random_variables: list,
+    observation_variables: Iterable[str],
+    random_variables: Iterable[str],
     nb_iter_SEM: int = 30,
     variance_obs_comp: float = 0.0001,
     suffix: str = "",
@@ -164,7 +169,7 @@ def xarray_Kalman_SEM(
 
     Note:
     - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.DataSet was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
     # create list of observation varibales
@@ -250,8 +255,8 @@ def xarray_Kalman_SEM(
 
 def xarray_Kalman_SEM_time_dependent(
     ds: xr.Dataset,
-    observation_variables: list,
-    random_variables: list,
+    observation_variables: Iterable[str],
+    random_variables: Iterable[str],
     nb_iter_SEM: int = 30,
     variance_obs_comp: float = 0.0001,
     suffix: str = "",
@@ -318,7 +323,7 @@ def xarray_Kalman_SEM_time_dependent(
 
     Note:
     - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.DataSet was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
     # create list of observation varibales
@@ -594,7 +599,7 @@ def add_empty_dataarrays(ds1: xr.Dataset, ds2: xr.Dataset, new_dimension: str) -
 
 
 def assign_variables_by_selection(
-    ds1: xr.Dataset, ds2: xr.Dataset, select_dict: Dict
+    ds1: xr.Dataset, ds2: xr.Dataset, select_dict: Dict = dict()
 ) -> None:
     """
     Set all variables from ds2 into ds1 at the specified selection coordinates.
@@ -642,12 +647,12 @@ def assign_variables_by_selection(
 
 
 def multiple_runs_of_func(
-    ds: xr.DataSet,
-    func: Callable[[xr.DataSet, Dict]],
+    ds: xr.Dataset,
+    func: Callable[[xr.Dataset, Dict], xr.Dataset],
     func_kwargs: Dict,
     number_of_runs: int = 2,
     new_dimension: str = "run",
-) -> xr.DataSet:
+) -> xr.Dataset:
     """
     Run a function multiple times on a dataset and combine the results into an
     xarray.Dataset.
