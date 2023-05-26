@@ -1,23 +1,21 @@
 import numpy as np
 import pytest
+import xarray as xr
 
 from numpy.testing import assert_almost_equal
 
-from kalman_reconstruction.pipeline import (
-    multiple_runs_of_func,
-)
-
-import numpy as np
-import xarray as xr
-import pytest
 from kalman_reconstruction.pipeline import multiple_runs_of_func
 
-def simple_function_01(ds, var = "var", var_new = "var_new"):
-    """ Multiply the variable by 2 """
+
+def simple_function_01(ds, var="var", var_new="var_new"):
+    """Multiply the variable by 2."""
     ds[var_new] = ds[var] * 2
     return ds
 
-def simple_function_02(ds: xr.Dataset, var: str = "var", var_new: str = "var_new", value: int = 10) -> xr.Dataset:
+
+def simple_function_02(
+    ds: xr.Dataset, var: str = "var", var_new: str = "var_new", value: int = 10
+) -> xr.Dataset:
     """
     Perform a simple function on a dataset.
 
@@ -32,7 +30,6 @@ def simple_function_02(ds: xr.Dataset, var: str = "var", var_new: str = "var_new
 
     Returns:
         xr.Dataset: The resulting dataset with the modified variable.
-
     """
     # Create a new dataset with the same coordinates as the input dataset
     result = xr.Dataset(coords=ds.coords)
@@ -51,14 +48,17 @@ def simple_function_02(ds: xr.Dataset, var: str = "var", var_new: str = "var_new
 
     return result
 
+
 @pytest.fixture
 def example_dataset_01():
     x = np.array([2, 3])
     y = np.array([0, 1, 2, 3])
-    data_01 = np.array([
-        [0, 2, 3, np.nan],
-        [1, 1, 1, 1],
-    ])
+    data_01 = np.array(
+        [
+            [0, 2, 3, np.nan],
+            [1, 1, 1, 1],
+        ]
+    )
     return xr.Dataset(
         data_vars=dict(
             var=(("x", "y"), data_01),
@@ -66,19 +66,22 @@ def example_dataset_01():
         coords=dict(
             x=x,
             y=y,
-        )
+        ),
     )
+
 
 @pytest.fixture
 def example_dataset_02():
     y = np.array([0, 1, 2, 3])
     z = np.array([7, 8])
-    data_02 = np.array([
-        [0, 2],
-        [1, 1],
-        [2, np.nan],
-        [0, 0],
-    ])
+    data_02 = np.array(
+        [
+            [0, 2],
+            [1, 1],
+            [2, np.nan],
+            [0, 0],
+        ]
+    )
     return xr.Dataset(
         data_vars=dict(
             var=(("y", "z"), data_02),
@@ -86,7 +89,7 @@ def example_dataset_02():
         coords=dict(
             y=y,
             z=z,
-        )
+        ),
     )
 
 
