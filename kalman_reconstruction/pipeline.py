@@ -1,14 +1,9 @@
-from typing import (
-    Callable, 
-    Dict, 
-    Tuple,
-    Iterable,
-)
+from typing import Callable, Dict, Iterable, Tuple
 
 import numpy as np
 import xarray as xr
 
-from kalman_reconstruction.kalman import Kalman_SEM
+from kalman_reconstruction.kalman import Kalman_filter, Kalman_SEM, Kalman_smoother
 from kalman_reconstruction.kalman_time_dependent import Kalman_SEM_time_dependent
 
 
@@ -102,6 +97,19 @@ def input_matrices_H_R(
     return H, R
 
 
+def _input_matrices_H_R_from_n_p(
+    n: int,
+    p: int,
+    variance_obs_comp: float = 0.0001,
+    axis: int = 1,
+) -> Tuple[np.ndarray, np.ndarray]:
+    # kalman parameters
+    H = np.append(np.eye(p), np.zeros((p, n)), axis=axis)[:, 0:n]
+    R = variance_obs_comp * np.eye(p)
+
+    return H, R
+
+
 def input_matrices_M_Q(
     states: np.ndarray,
     variance_state_comp: float = 0.0001,
@@ -131,7 +139,202 @@ def input_matrices_M_Q(
     M = np.eye(n)
     Q = variance_state_comp * np.eye(n)
 
-    return M,Q
+    return M, Q
+
+
+# Kalman filter
+
+
+def xarray_Kalman_filter(
+    ds: xr.Dataset,
+    state_variables: Iterable[str],
+    observation_variables: Iterable[str],
+    initial_covariance_matrix: np.ndarray,
+    M: np.ndarray,
+    Q: np.ndarray,
+    H: np.ndarray,
+    R: np.ndarray,
+    dim="time",
+    estimation_idx=0,
+    suffix: str = "",
+) -> xr.Dataset:
+    """
+    NOTE: !!!!!!!!!! NOT READY !!!!!!!!!!
+    Run the Kalman filter on the input dataset and return the results in an xarray Dataset.
+
+    This function applies the Kalman filter algorithm on the specified observations and state variables in the given xarray dataset.
+    The results are stored in a new xarray dataset.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Input dataset containing the state and random variables.
+    state_variables : list len(n)
+        List of state variables to be used in the Kalman filter.
+    observation_variables : list len(p)
+        List of observed variables to be used in the Kalman filter.
+    initial_covariance_matrix : np.ndarray shape(n,n)
+        Initial Covarince Matrix corresponding to the initial estimation of the state variables.
+    M : array-like, shape (n, n)
+        Transition matrix.
+    Q : array-like, shape (T, n, n)
+        Process noise covariance matrix.
+    H : array-like, shape (p, n)
+        Observation matrix that maps the state space to the observation space.
+    R : array-like, shape (p, p)
+        Covariance matrix representing the observation noise.
+    dim : str
+        Dimension along which the estimation state shall be selected.
+        Default dimension is "time".
+    estimation_idx : int
+        Index used for the inital estimation of the state from along 'dim'.
+        Defaul to 0.
+    suffix : str, optional
+        Suffix to be appended to the variable names in the output dataset.
+        Default is an empty string.
+
+    Returns
+    -------
+    xarray.Dataset
+        New xarray dataset containing the results of the Kalman filter.
+        Dimensions are:
+
+    Output Dimensions:
+    - time: The time dimension of the input dataset.
+    - state_name: Dimension representing the state variables.
+    - state_name_copy: Dimension representing a copy of the state variables.
+
+    Output Coordinates:
+    - time: Coordinates corresponding to the time of the input dataset.
+    - state_name: Coordinates corresponding to the state variables.
+    - state_name_copy: Coordinates corresponding to the copy of the state variables.
+
+    Output Variables:
+    - state_forecast<suffix>: DataArray containing the estimated states over time.
+        - Dimensions: time, state_name
+    - covariance_forecast<suffix>: DataArray containing the covariance of the estimated states over time.
+        - Dimensions: time, state_name, state_name_copy
+    - state_assimilation<suffix>: DataArray containing the estimated states over time.
+        - Dimensions: time, state_name
+    - covariance_assimilation<suffix>: DataArray containing the covariance of the estimated states over time.
+        - Dimensions: time, state_name, state_name_copy
+    - log_likelihod<suffix>: DataArray containing the log-likelihood values for each timestep.
+        - Dimensions: time
+    # Not yet implemented.
+    # - kalman_gain<suffix>: DataArray containing the Kalman gain values for each timestep.
+    #     - Dimensions: time
+
+    Note:
+    - The output variable names will be suffixed with the provided suffix parameter.
+    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+    """
+    # raise NotImplementedError("Function full deployed yet!")
+    # function to craete new names from a list of strings
+    join_names = lambda l: "".join(l)
+
+    n = len(state_variables)
+    p = len(observation_variables)
+
+    # check the dimensions:
+    assert np.shape(initial_covariance_matrix) == (
+        n,
+        n,
+    ), f"Mismatch in dimensions of initial covariance matrix : {np.shape(initial_covariance_matrix)} but should be {(n,n)}"
+    assert np.shape(M) == (
+        n,
+        n,
+    ), f"Mismatch in dimensions of R : {np.shape(M)} but should be {(n,n)}"
+    assert np.shape(Q) == (
+        n,
+        n,
+    ), f"Mismatch in dimensions of Q : {np.shape(Q)} but should be {(n,n)}"
+    assert np.shape(H) == (
+        p,
+        n,
+    ), f"Mismatch in dimensions of R : {np.shape(H)} but should be {(p,n)}"
+    assert np.shape(R) == (
+        p,
+        p,
+    ), f"Mismatch in dimensions of R : {np.shape(R)} but should be {(p,p)}"
+
+    # create a list of numpy array to be used for the Kalman itteration
+    observation_list = []
+    state_list = []
+    for var in observation_variables:
+        observation_list.append(ds[var].values.flatten())
+    for var in state_variables:
+        state_list.append(ds[var].isel({dim: estimation_idx}).values.flatten())
+
+    initial_state_estimation, observations = input_arrays(
+        observation_list=observation_list, state_list=state_list
+    )
+
+    # initial_state_estimation has shape (1,n) but we need it to be (n)
+    initial_state_estimation = initial_state_estimation[0]
+
+    # ---------------
+    # run the Kalman_SEM algorithm
+    # ---------------
+    (x_f, P_f, x_a, P_a, log_likelihod, K_a) = Kalman_filter(
+        y=observations,
+        x0=initial_state_estimation,
+        P0=initial_covariance_matrix,
+        M=M,
+        Q=Q,
+        H=H,
+        R=R,
+    )
+
+    # ---------------
+    # create result dataset in which to store the whole lists
+    # ---------------
+    result = xr.Dataset({})
+    # assign coordinates
+    result = result.assign_coords(
+        dict(
+            time=ds["time"],
+            state_name=state_variables,
+            state_name_copy=state_variables,
+            observation_name=observation_variables,
+        )
+    )
+    # store x_s
+    new_var = join_names(["state_forecast", suffix])
+    result[new_var] = xr.DataArray(
+        data=x_f,
+        dims=["time", "state_name"],
+    )
+    # store P_s
+    new_var = join_names(["covariance_forecast", suffix])
+    result[new_var] = xr.DataArray(
+        data=P_f,
+        dims=["time", "state_name", "state_name_copy"],
+    )
+    # store x_a
+    new_var = join_names(["state_assimilation", suffix])
+    result[new_var] = xr.DataArray(
+        data=x_a,
+        dims=["time", "state_name"],
+    )
+    # store P_a
+    new_var = join_names(["covariance_assimilation", suffix])
+    result[new_var] = xr.DataArray(
+        data=P_a,
+        dims=["time", "state_name", "state_name_copy"],
+    )
+    # store the log_likelihod
+    new_var = join_names(["log_likelihod", suffix])
+    result[new_var] = xr.DataArray(
+        data=log_likelihod,
+        dims=["time"],
+    )
+    # store Kalman_gain:
+    # TODO: Not NotImplementedError
+
+    return result
+
+
+# Kalman SEM
 
 
 def xarray_Kalman_SEM(
@@ -262,7 +465,6 @@ def xarray_Kalman_SEM(
         data=P_s,
         dims=["time", "state_name", "state_name_copy"],
     )
-
     # store M
     new_var = join_names(["M", suffix])
     result[new_var] = xr.DataArray(
@@ -417,13 +619,6 @@ def xarray_Kalman_SEM_time_dependent(
     result[new_var] = xr.DataArray(
         data=P_s,
         dims=["time", "state_name", "state_name_copy"],
-    )
-    # store M and Q
-    result = result.assign_coords(
-        dict(
-            state_name=observation_variables,
-            state_name_copy=observation_variables,
-        )
     )
     # store M
     new_var = join_names(["M", suffix])
