@@ -102,6 +102,38 @@ def input_matrices_H_R(
     return H, R
 
 
+def input_matrices_M_Q(
+    states: np.ndarray,
+    variance_state_comp: float = 0.0001,
+    axis: int = 1,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Create default input observation matrices M and Q for a Kalman algorithms.
+
+    H will only contain values of 1 at corresponding positions
+
+    Parameters:
+        states (ndarray) shape(T,n): Array of state variables.
+        variance_state_comp (float): Variance of state component. Default to 0.0001.
+        axis (float): axis along which the number of variables is defined. Default to 1.
+
+    Returns:
+        Tuple: A Tuple containing the input matrices (M, Q).
+        - M : np.ndarray, shape (n, n)
+            Model matrix that maps the state space to the next timestep.
+        - Q : np.ndarray, shape (n, n)
+            Model noise covariance matrix.
+    """
+    # shapes
+    n = np.shape(states)[axis]
+
+    # kalman parameters
+    M = np.eye(n)
+    Q = variance_state_comp * np.eye(n)
+
+    return M,Q
+
+
 def xarray_Kalman_SEM(
     ds: xr.Dataset,
     observation_variables: Iterable[str],
