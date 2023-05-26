@@ -1,3 +1,5 @@
+from typing import Callable, Dict, Tuple
+
 import numpy as np
 import xarray as xr
 
@@ -8,7 +10,9 @@ from kalman_reconstruction.kalman_time_dependent import Kalman_SEM_time_dependen
 # Kalman_Functions
 
 
-def input_arrays_combined(observation_list: list, random_list: list) -> tuple:
+def input_arrays_combined(
+    observation_list: list, random_list: list
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create input arrays of observations (y) and states (x) for the
     Kalman_algorithms. The state is a concatenation of the observation
@@ -22,7 +26,7 @@ def input_arrays_combined(observation_list: list, random_list: list) -> tuple:
         random_list (list) len(r): List of latent variables that shall be appended.
 
     Returns:
-        tuple : A tuple containing the input arrays for the Kalman_algorithms.
+        Tuple : A Tuple containing the input arrays for the Kalman_algorithms.
             - states : np.ndarray shape(T, p+r),
             - observations : np.ndarray shape(T, p)
     """
@@ -32,7 +36,9 @@ def input_arrays_combined(observation_list: list, random_list: list) -> tuple:
     return states, observations
 
 
-def input_arrays(state_list: list, observation_list: list) -> tuple:
+def input_arrays(
+    state_list: list, observation_list: list
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create input arrays of observations (y) and states (x) for the
     Kalman_algorithms.
@@ -45,7 +51,7 @@ def input_arrays(state_list: list, observation_list: list) -> tuple:
         observation_list (list) len(p): List of observed variables.
 
     Returns:
-        tuple : A tuple containing the input arrays for the Kalman_algorithms.
+        Tuple : A Tuple containing the input arrays for the Kalman_algorithms.
             - states : np.ndarray shape(T, n),
             - observations : np.ndarray shape(T, p)
     """
@@ -61,7 +67,7 @@ def input_matrices_H_R(
     observations: np.ndarray,
     variance_obs_comp: float = 0.0001,
     axis: int = 1,
-) -> tuple:
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create default input observation matrices H and R for a Kalman algorithms.
 
@@ -74,7 +80,7 @@ def input_matrices_H_R(
         axis (float): axis along which the number of variables is defined. Default to 1.
 
     Returns:
-        tuple: A tuple containing the input matrices (H, R).
+        Tuple: A Tuple containing the input matrices (H, R).
         - H : np.ndarray, shape (p, n)
             First estimation of the observation matrix that maps the state space to the observation space.
         - R : np.ndarray, shape (p, p)
@@ -243,13 +249,13 @@ def xarray_Kalman_SEM(
 
 
 def xarray_Kalman_SEM_time_dependent(
-    ds,
-    observation_variables,
-    random_variables,
-    nb_iter_SEM=30,
-    variance_obs_comp=0.0001,
-    suffix="",
-):
+    ds: xr.Dataset,
+    observation_variables: list,
+    random_variables: list,
+    nb_iter_SEM: int = 30,
+    variance_obs_comp: float = 0.0001,
+    suffix: str = "",
+) -> xr.Dataset:
     """
     Run the Kalman SEM algorithm on the input dataset and return the results in
     an xarray Dataset.
@@ -274,6 +280,9 @@ def xarray_Kalman_SEM_time_dependent(
     variance_obs_comp : float, optional
         Variance parameter for observation components in the Kalman SEM algorithm.
         Default is 0.0001.
+    sigma : float
+        Standard deviation as the sqrt(variance) of the Gaussian distribution to create the 1D kernel used for the local linear regression.
+        Note that the sigma is unitless and is measurent in index-positions of the array.
     suffix : str, optional
         Suffix to be appended to the variable names in the output dataset.
         Default is an empty string.
@@ -404,7 +413,9 @@ def xarray_Kalman_SEM_time_dependent(
 # Functions to handle dimensional or coordinate problems:
 
 
-def expand_and_assign_coords(ds1, ds2, select_dict={}) -> xr.Dataset:
+def expand_and_assign_coords(
+    ds1: xr.Dataset, ds2: xr.Dataset, select_dict: Dict = dict()
+) -> xr.Dataset:
     """
     Expand dimensions of ds1 and assign coordinates from ds2.
 
@@ -478,7 +489,13 @@ def expand_and_assign_coords(ds1, ds2, select_dict={}) -> xr.Dataset:
 # Functions to add one ore more varibales to a DataSet
 
 
-def add_random_variable(ds, var_name, random_generator, variance, dim="time"):
+def add_random_variable(
+    ds: xr.Dataset,
+    var_name: str,
+    random_generator: np.random.Generator,
+    variance: float,
+    dim: str = "time",
+) -> None:
     """
     Add a random variable to a given xarray dataset.
 
@@ -514,7 +531,7 @@ def add_random_variable(ds, var_name, random_generator, variance, dim="time"):
     )
 
 
-def create_empty_dataarray(ds1, ds2):
+def create_empty_dataarray(ds1: xr.Dataset, ds2: xr.Dataset) -> xr.DataArray:
     """
     Create an empty DataArray by combining the coordinates from two given
     datasets or dataarrays.
@@ -530,7 +547,7 @@ def create_empty_dataarray(ds1, ds2):
     return xr.DataArray(coords=coords.values(), dims=coords.keys())
 
 
-def add_empty_dataarrays(ds1, ds2, new_dimension):
+def add_empty_dataarrays(ds1: xr.Dataset, ds2: xr.Dataset, new_dimension: str) -> None:
     """
     Add empty data arrays to ds1 for each variable in ds2.
 
@@ -576,7 +593,9 @@ def add_empty_dataarrays(ds1, ds2, new_dimension):
         ds1[var] = empty_dataarray
 
 
-def assign_variables_by_selection(ds1: xr.Dataset, ds2: xr.Dataset, select_dict: dict):
+def assign_variables_by_selection(
+    ds1: xr.Dataset, ds2: xr.Dataset, select_dict: Dict
+) -> None:
     """
     Set all variables from ds2 into ds1 at the specified selection coordinates.
 
@@ -622,7 +641,13 @@ def assign_variables_by_selection(ds1: xr.Dataset, ds2: xr.Dataset, select_dict:
 #  Functions for Experiments or analysis
 
 
-def multiple_runs_of_func(ds, func, func_kwargs, number_of_runs=2, new_dimension="run"):
+def multiple_runs_of_func(
+    ds: xr.DataSet,
+    func: Callable[[xr.DataSet, Dict]],
+    func_kwargs: Dict,
+    number_of_runs: int = 2,
+    new_dimension: str = "run",
+) -> xr.DataSet:
     """
     Run a function multiple times on a dataset and combine the results into an
     xarray.Dataset.
