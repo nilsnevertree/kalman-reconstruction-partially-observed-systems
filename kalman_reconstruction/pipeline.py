@@ -8,6 +8,79 @@ from kalman_reconstruction.kalman_time_dependent import Kalman_SEM_time_dependen
 # Kalman_Functions
 
 
+def input_arrays_combined(random_list: list, observation_list: list) -> tuple:
+    """
+    Create input arrays of observations (y) and states (x) for the
+    Kalman_algorithms. The state is a combination of the observation_list and
+    the random_list, where the varibaels in teh random_list follow the
+    observation_list.
+
+    Note:
+    - The state variables (x) will be the combination of the variables in the observation_list and random_list.
+
+    Parameters:
+        random_list (list): List of latent variables that are appended to the observations and create the state.
+        observation_list (list): List of observed variables.
+
+    Returns:
+        tuple: A tuple containing the input arrays (state, observations) for the Kalman_algorithms.
+    """
+    states, observations = input_arrays(
+        observation_list=observation_list, state_list=observation_list + random_list
+    )
+    return states, observations
+
+
+def input_arrays(state_list: list, observation_list: list) -> tuple:
+    """
+    Create input arrays of observations (y) and states (x) for the
+    Kalman_algorithms.
+
+    Parameters:
+        state_list (list): List of state variables.
+        observation_list (list): List of observed variables.
+
+    Returns:
+        tuple: A tuple containing the input arrays (state, observations) for the Kalman_algorithms.
+    """
+    observations = np.array(observation_list).T
+    states = np.array(
+        state_list,
+    ).T
+    return states, observations
+
+
+def input_matrices_H_R(
+    states: np.ndarray,
+    observations: np.ndarray,
+    variance_obs_comp: float = 0.0001,
+    axis: int = 1,
+) -> tuple:
+    """
+    Create default input observation matrices H and R for a Kalman algorithms.
+
+    H will only contain values of 1 at corresponding positions
+
+    Parameters:
+        states (ndarray): Array of state variables.
+        observations (ndarray): Array of observation variables.
+        variance_obs_comp (float): Variance of observation component. Default to 0.0001.
+        axis (float): axis along which the number of variables is defined. Default to 1.
+
+    Returns:
+        tuple: A tuple containing the input matrices (H, R).
+    """
+    # shapes
+    n = np.shape(states)[axis]
+    p = np.shape(observations)[axis]
+
+    # kalman parameters
+    H = np.append(np.eye(p), np.zeros((p, n)), axis=1)[:, 0:n]
+    R = variance_obs_comp * np.eye(p)
+
+    return H, R
+
+
 def run_Kalman_SEM(y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001):
     """
     Run the Kalman Stochastic Expectation-Maximization (SEM) algorithm.
@@ -210,7 +283,7 @@ def xarray_Kalman_SEM(
 
 
 def run_Kalman_SEM_time_dependent(
-    y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001
+    y_list, random_list, nb_iter_SEM=30, variance_obs_comp=0.0001, sigma=50
 ):
     """
     Run the Kalman Stochastic Expectation-Maximization (SEM) algorithm.
@@ -229,6 +302,9 @@ def run_Kalman_SEM_time_dependent(
     variance_obs_comp :float
         Variance of observation components.
         Default is 0.0001.
+    sigma : float
+        Standard deviation as the sqrt(variance) of the Gaussian distribution to create the 1D kernel used for the local linear regression in the Kalman_SEM_time_dependent algorithm.
+        Note that the sigma is unitless and is measurent in index-positions of the array.
 
     Returns:
     ----------
