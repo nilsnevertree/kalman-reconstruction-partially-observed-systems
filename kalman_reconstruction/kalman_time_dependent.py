@@ -5,6 +5,8 @@ stochastic estimation maximization alogorithm.
 The module includes
 """
 
+from typing import Tuple
+
 import numpy as np
 import scipy as sp
 
@@ -14,7 +16,15 @@ from tqdm import tqdm
 from kalman_reconstruction.statistics import gaussian_kernel_1D
 
 
-def Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R):
+def Kalman_filter_time_dependent(
+    y: np.ndarray,
+    x0: np.ndarray,
+    P0: np.ndarray,
+    M: np.ndarray,
+    Q: np.ndarray,
+    H: np.ndarray,
+    R: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Apply the linear and Gaussian Kalman filter to estimate the state of a
     time-dependent system.
@@ -97,7 +107,24 @@ def Kalman_filter_time_dependent(y, x0, P0, M, Q, H, R):
     return x_f, P_f, x_a, P_a, loglik, K_a
 
 
-def Kalman_smoother_time_dependent(y, x0, P0, M, Q, H, R):
+def Kalman_smoother_time_dependent(
+    y: np.ndarray,
+    x0: np.ndarray,
+    P0: np.ndarray,
+    M: np.ndarray,
+    Q: np.ndarray,
+    H: np.ndarray,
+    R: np.ndarray,
+) -> Tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """
     Apply the linear and Gaussian Kalman smooother to estimate the state of a
     time-dependent system. Thus the provided Observation.
@@ -177,7 +204,17 @@ def Kalman_smoother_time_dependent(y, x0, P0, M, Q, H, R):
     return x_f, P_f, x_a, P_a, x_s, P_s, loglik, P_s_lag
 
 
-def Kalman_SEM_time_dependent(x, y, H, R, nb_iter_SEM, sigma=100, seed=11):
+def Kalman_SEM_time_dependent(
+    x: np.ndarray,
+    y: np.ndarray,
+    H: np.ndarray,
+    R: np.ndarray,
+    nb_iter_SEM: int,
+    sigma: float = 100,
+    seed: int = 11,
+) -> Tuple[
+    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+]:
     """
     Apply the Kalman Stochastic Expectation Maximization alogrihtm to estimate
     the state of a time-dependent system. This function applies the Kalman
