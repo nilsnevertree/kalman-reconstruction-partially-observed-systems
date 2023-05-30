@@ -1233,3 +1233,158 @@ def multiple_runs_of_func(
         )
 
     return result
+
+
+# Analysis functions
+
+
+def forcast_from_kalman(
+    ds_kalman_SEM: xr.Dataset,
+    ds_state_covariance: xr.Dataset,
+    state_var_name: str = "states",
+    covariance_var_name: str = "covariance",
+    new_dimension: str = "horizon",
+    forecast_dim: str = "time",
+    forecast_length: int = 30,
+) -> xr.Dataset:
+    """
+    Generate forecasts from the Kalman SEM results for a given forecast length.
+
+    This function generates forecasts based on the Kalman SEM results and a provided dataset containing the state and covariance dataset.
+    It creates a new dataset with the forecasted states and covariance matrices for a specified forecast length.
+
+
+
+    Parameters:
+        ds_kalman_SEM (xr.Dataset): The Kalman SEM results dataset.
+            Has to contain the variables "M", "Q", "states", "covariance".
+        ds_state_covariance (xr.Dataset): The state covariance dataset.
+        state_var_name (str): The variable name for the states in ds_state_covariance. Default is "states".
+        covariance_var_name (str): The variable name for the covariance matrices in ds_state_covariance. Default is "covariance".
+        new_dimension (str): The name of the new dimension representing the forecast horizon. Default is "horizon".
+        forecast_dim (str): The name of the dimension representing the time in ds_kalman_SEM. Default is "time".
+        forecast_length (int): The length of the forecast horizon. Default is 30.
+
+    Returns:
+        xr.Dataset: The dataset containing the forecasted states and covariance matrices.
+
+    Example:
+        '''
+        # Generate forecasts with a forecast length of 30
+        # Create data arrays
+
+        # Create data arrays
+        >>> time = np.array([0.0, 0.001, 0.002])
+        >>> state_name = np.array(['x', 'y', 'z'])
+        >>> state_name_copy = np.array(['x', 'y', 'z'])
+        >>> states_data = np.array([
+                [-1.798, 17.91, 5.0],
+                [-1.785, 17.889, 5.1],
+                [-1.792, 17.85, 5.2]
+                ])
+        >>> covariance_data = np.array([
+                [[0.000105, 0.000086, 0.0012],
+                [0.000086, 0.000131, -0.0015],
+                [0.0012, -0.0015, 0.256]],
+
+                [[0.000075, 0.000021, 0.000184],
+                [0.000021, 0.000077, -0.000201],
+                [0.000184, -0.000201, 1.446]],
+
+                [[0.000078, 0.000018, -0.000034],
+                [0.000018, 0.000079, 0.000024],
+                [-0.000034, 0.000024, 1.553]]
+                ])
+        >>> M_data = np.array([
+                [1.0, -0.000043, -0.0047],
+                [0.000492, 1.0, 0.0067],
+                [0.0056, -0.0012, 0.983]
+                ])
+        >>> Q_data = np.array([
+                [0.003, 0.0029, -0.0077],
+                [0.0029, 0.0032, 0.0102],
+                [-0.0077, 0.0102, 3.028]
+                ])
+
+        # Create the xarray Dataset
+        >>> ds = xr.Dataset(coords={'time': time, 'state_name': state_name, 'state_name_copy': state_name_copy})
+
+        # Add data variables
+        >>> ds['states'] = (('time', 'state_name'), states_data)
+        >>> ds['covariance'] = (('time', 'state_name', 'state_name_copy'), covariance_data)
+        >>> ds['M'] = (('state_name', 'state_name_copy'), M_data)
+        >>> ds['Q'] = (('state_name', 'state_name_copy'), Q_data)
+
+        >>> forecast = forcast_from_kalman(
+                ds_kalman_SEM = ds,
+                ds_state_covarinace = ds,
+                state_var_name = "states",
+                covariance_var_name = "covariance",
+                forecast_length = 10,
+        )
+        >>> print(forecast)
+
+        # Access the forecasted states and covariance matrices
+        >>> forecast_states = forecast["states"]
+        >>> forecast_covariance = forecast["covariance"]
+
+        # Access a specific forecasted state and covariance matrix at horizon index 5
+        >>> state_at_horizon_5 = forecast_states.sel(horizon=5)
+        >>> covariance_at_horizon_5 = forecast_covariance.sel(horizon=5)
+        '''
+    """
+    # first create the corresponding result Dataset
+    # copy coords from kalman_SEM results
+    result = xr.Dataset(coords=ds_kalman_SEM.coords)
+    # add new coordinate
+    result = result.assign_coords({new_dimension: np.arange(forecast_length)})
+    # assign empty data arrays to the result
+    add_empty_dataarrays(
+        result, ds_kalman_SEM[["states", "covariance"]], new_dimension=new_dimension
+    )
+
+    # make sure it is in the right order
+    result = result.transpose(new_dimension, forecast_dim, ...)
+    ds_kalman_SEM = ds_kalman_SEM.transpose(forecast_dim, ...)
+
+    # assign the initial M and Q Matrices
+    # this also drops the newdimension for M and Q
+    result["M"] = ds_kalman_SEM["M"]
+    result["Q"] = ds_kalman_SEM["Q"]
+
+    # assign the initial state
+    assign_variable_by_double_selection(
+        ds1=result,
+        da2=ds_state_covariance[state_var_name],
+        var_name="states",
+        select_dict1={new_dimension: 0},
+        select_dict2={},
+    )
+
+    # assign the initial covarinace
+    assign_variable_by_double_selection(
+        ds1=result,
+        da2=ds_state_covariance[covariance_var_name],
+        var_name="covariance",
+        select_dict1={new_dimension: 0},
+        select_dict2={},
+    )
+
+    # For the whole forecast length, compute the new state at each forecast step and the corresponding other stuff
+    for idx in range(0, forecast_length - 1):
+        # state forecast
+        state_forecast = (
+            result.M.values @ result.states.isel({new_dimension: idx}).values.T
+        )
+        result["states"].loc[{new_dimension: idx + 1}] = state_forecast.T
+
+        # covariance forecast
+        covariance_forecast = (
+            result.M.values
+            @ result.covariance.sel({new_dimension: idx}).values
+            @ result.M.T.values
+            + result.Q.values
+        )
+        result["covariance"].loc[{new_dimension: idx + 1}] = covariance_forecast
+
+    return result
