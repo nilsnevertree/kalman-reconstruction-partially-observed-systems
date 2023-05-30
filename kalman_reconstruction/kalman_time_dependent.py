@@ -73,12 +73,12 @@ def Kalman_filter_time_dependent(
     T, p = np.shape(y)
 
     # Kalman initialization
-    x_f = np.empty((T, n))  # forecast state
-    P_f = np.empty((T, n, n))  # forecast error covariance matrix
-    x_a = np.empty((T, n))  # analysed state
-    P_a = np.empty((T, n, n))  # analysed error covariance matrix
-    loglik = np.empty((T))  # np.log-likelihood
-    K_a = np.empty((T, n, p))  # analysed Kalman gain
+    x_f = np.zeros((T, n))  # forecast state
+    P_f = np.zeros((T, n, n))  # forecast error covariance matrix
+    x_a = np.zeros((T, n))  # analysed state
+    P_a = np.zeros((T, n, n))  # analysed error covariance matrix
+    loglik = np.zeros((T))  # np.log-likelihood
+    K_a = np.zeros((T, n, p))  # analysed Kalman gain
     x_a[0, :] = x0
     P_a[0, :, :] = P0
 
@@ -179,9 +179,9 @@ def Kalman_smoother_time_dependent(
     T, p = np.shape(y)
 
     # Kalman initialization
-    x_s = np.empty((T, n))  # smoothed state
-    P_s = np.empty((T, n, n))  # smoothed error covariance matrix
-    P_s_lag = np.empty((T - 1, n, n))  # smoothed lagged error covariance matrix
+    x_s = np.zeros((T, n))  # smoothed state
+    P_s = np.zeros((T, n, n))  # smoothed error covariance matrix
+    P_s_lag = np.zeros((T - 1, n, n))  # smoothed lagged error covariance matrix
 
     # apply the Kalman filter
     x_f, P_f, x_a, P_a, loglik, K_a = Kalman_filter_time_dependent(
@@ -288,8 +288,8 @@ def Kalman_SEM_time_dependent(
     # tab to store the np.log-likelihood
     tab_loglik = []
 
-    M = np.empty((T, n, n))
-    Q = np.empty_like(M)
+    M = np.zeros((T, n, n))
+    Q = np.zeros_like(M)
 
     # loop on the SEM iterations
     for i in tqdm(np.arange(0, nb_iter_SEM)):
@@ -310,7 +310,7 @@ def Kalman_SEM_time_dependent(
 
         # Kalman initialization
         if i == 0:
-            x0 = np.empty(n)
+            x0 = np.zeros(n)
             P0 = np.eye(n)
         else:
             x0 = x_s[0, :]
