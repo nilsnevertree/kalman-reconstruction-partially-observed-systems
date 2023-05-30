@@ -439,7 +439,7 @@ def xarray_Kalman_smoother(
     assert np.shape(M) == (
         n,
         n,
-    ), f"Mismatch in dimensions of R : {np.shape(M)} but should be {(n,n)}"
+    ), f"Mismatch in dimensions of M : {np.shape(M)} but should be {(n,n)}"
     assert np.shape(Q) == (
         n,
         n,
@@ -447,7 +447,7 @@ def xarray_Kalman_smoother(
     assert np.shape(H) == (
         p,
         n,
-    ), f"Mismatch in dimensions of R : {np.shape(H)} but should be {(p,n)}"
+    ), f"Mismatch in dimensions of H : {np.shape(H)} but should be {(p,n)}"
     assert np.shape(R) == (
         p,
         p,
