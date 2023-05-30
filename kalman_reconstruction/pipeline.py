@@ -1091,6 +1091,85 @@ def assign_variables_by_selection(
         ds1[var].loc[select_dict] = ds2[var].loc[select_dict]
 
 
+def assign_variable_by_double_selection(
+    ds1: xr.Dataset,
+    da2: xr.DataArray,
+    var_name: str,
+    select_dict1: Dict = dict(),
+    select_dict2: Dict = dict(),
+) -> None:
+    """
+    Set variables from DataArray da2 into ds1 at the specified selection
+    coordinates.
+
+    This function assigns the values of the variables from da2 to the corresponding variables in ds1
+    at the specified selection coordinates defined by select_dict.
+
+    Parameters:
+        ds1 (xr.Dataset): The target dataset where variables will be set.
+        da2 (xr.DataArray): The source dataset from which variables will be taken.
+        var_name (str) : variable name into which da2 shall be inserted.
+        select_dict1 (dict): Dictionary of selection or index selection containing names and values of the coordinates to select from ds1.
+        select_dict2 (dict): Dictionary of selection or index selection containing names and values of the coordinates to select from da2.
+
+    Returns:
+        None
+    """
+    # Iterate over all variables in ds2
+    # Assign values from ds2 to corresponding variables in ds1 at the selection coordinates
+    ds1[var_name].loc[select_dict1] = da2.loc[select_dict2]
+
+
+def assign_variables_by_double_selection(
+    ds1: xr.Dataset,
+    ds2: xr.Dataset,
+    select_dict1: Dict = dict(),
+    select_dict2: Dict = dict(),
+) -> None:
+    """
+    Set all variables from ds2 into ds1 at the specified selection coordinates
+    for both datasets.
+
+    This function assigns the values of all variables from ds2 to the corresponding variables in ds1
+    at the specified selection coordinates defined by select_dict.
+
+    Parameters:
+        ds1 (xr.Dataset): The target dataset where variables will be set.
+        ds2 (xr.Dataset): The source dataset from which variables will be taken.
+        select_dict1 (dict): Dictionary of selection or index selection containing names and values of the coordinates to select from ds1.
+        select_dict2 (dict): Dictionary of selection or index selection containing names and values of the coordinates to select from ds2.
+
+    Returns:
+        None
+
+    Example:
+    >>> ds1 = xr.Dataset(
+        {"var1": (("x", "y"), np.zeros((3, 3))), "var2": (("x", "y"), np.ones((3, 3)))},
+        coords={"x": [1, 2, 3], "y": [4, 5, 6]}
+    )
+    >>> ds2 = xr.Dataset(
+        {"var1": (("x", "y"), np.full((3, 3), 2)), "var2": (("x", "y"), np.full((3, 3), 3))},
+        coords={"x": [2, 3, 4], "y": [5, 6, 7]}
+    )
+    >>> select_dict = {"x": 2, "y": 6}
+    >>> set_all_variables_for_selection(ds1, ds2, select_dict)
+    >>> print(ds1)
+    <xarray.Dataset>
+    Dimensions:  (x: 3, y: 3)
+    Coordinates:
+      * x        (x) int64 1 2 3
+      * y        (y) int64 4 5 6
+    Data variables:
+        var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 2.0 0.0 0.0 0.0
+        var2     (x, y) float64 1.0 1.0 1.0 1.0 1.0 3.0 1.0 1.0 1.0
+    """
+
+    # Iterate over all variables in ds2
+    for var in ds2.data_vars:
+        # Assign values from ds2 to corresponding variables in ds1 at the selection coordinates
+        ds1[var].loc[select_dict1] = ds2[var].loc[select_dict2]
+
+
 #  Functions for Experiments or analysis
 
 
