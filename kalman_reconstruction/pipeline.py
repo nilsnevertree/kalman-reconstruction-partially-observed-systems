@@ -1470,3 +1470,107 @@ def to_standard_dataset(
         )
     return result
 
+
+def perfect_forcast(
+    ds: xr.Dataset,
+    states_var_name: str = "states",
+    new_dimension: str = "horizon",
+    forecast_dim: str = "time",
+    forecast_length: int = 30,
+) -> xr.Dataset:
+    """
+    Generate perfect forecasts for a given dataset for a specified forecast
+    length along the provided forecast dimension. Results will be stored in a
+    new xr.Dataset along the given new dimension.
+
+    This function generates perfect forecasts for a provided dataset containing a DataArray containing the states.
+
+    Note:
+    The function expects a dataset of the same form as the `to_standard_dataset` function returns:
+    - states array with dimensions ["forecast_dim", "state_name"].
+
+    Parameters:
+        ds (xr.Dataset): The dataset containing the states.
+            Must contain the variable specified by `states_var_name`.
+        states_var_name (str): The variable name for the states in `ds`. Default is "states".
+        new_dimension (str): The name of the new dimension representing the forecast horizon. Default is "horizon".
+        forecast_dim (str): The name of the dimension representing the forecast dimension (e.g. "time") in `ds`. Default is "time".
+        forecast_length (int): The length of the forecast horizon. Default is 30.
+
+    Returns:
+        xr.Dataset: The dataset containing the forecasted states and covariance matrices.
+
+        The returned dataset has the following variables:
+        - "states" (dims: ["horizon", "state_name"]): The forecasted states at each horizon step.
+
+        The returned dataset has the following dimensions:
+        - ``new_dimension``: The forecast horizon dimension.
+        - Additional dimensions inherited from the input dataset `ds`.
+
+        The returned dataset has the following coordinates:
+        - Coordinates inherited from the input dataset `ds`.
+        - ``new_dimension``: The values of the forecast horizon dimension, ranging from 0 to `forecast_length - 1`.
+
+    Example usage:
+    # Create a dataset with states
+    >>> ds = xr.Dataset(
+        {
+            "states_model": (("time", "state_name"), np.arange(30).reshape(10, 3)),
+            "other_var": (("time",), np.arange(10)),
+        },
+        coords={
+            "time": np.arange(10),
+            "state_name": ["state1", "state2", "state3"],
+        },
+    )
+
+    >>> # Generate perfect forecasts
+    >>> result = perfect_forecast(ds, states_var_name="states_model", forecast_length=5, forecast_dim="time)
+    >>> print(result)
+    """
+    # first create the corresponding result Dataset
+    # copy coords from kalman_SEM results
+    result = xr.Dataset(coords=ds.coords)
+    # add new coordinate
+    result = result.assign_coords({new_dimension: np.arange(forecast_length)})
+    # assign empty data arrays to the result
+    add_empty_dataarrays(result, ds, new_dimension=new_dimension)
+
+    # make sure it is in the right order
+    result = result.transpose(new_dimension, forecast_dim, ...)
+    ds = ds.transpose(forecast_dim, ...)
+
+    # assign the initial state
+    assign_variable_by_double_selection(
+        ds1=result,
+        da2=ds[states_var_name],
+        var_name="states",
+        select_dict1={new_dimension: 0},
+        select_dict2={},
+    )
+
+    maximum_forecast_index = len(ds[forecast_dim])
+    # For the whole forecast length, compute the new state at each forecast step and the corresponding other stuff
+    for idx in range(0, forecast_length - 1):
+        # state forecast
+        # create time_selection:
+        true_range = result[forecast_dim].isel({forecast_dim: slice(idx + 1, -1)})
+        true_select_dict = {
+            new_dimension: idx,
+            forecast_dim: true_range,
+        }
+        new_forcast_range = result[forecast_dim].isel({forecast_dim: slice(idx, -2)})
+        new_select_dict = {
+            new_dimension: idx + 1,
+            forecast_dim: new_forcast_range,
+        }
+
+        assign_variables_by_double_selection(
+            ds1=result,
+            ds2=result,
+            select_dict1=new_select_dict,
+            select_dict2=true_select_dict,
+            _force=True,
+        )
+
+    return result
