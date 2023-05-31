@@ -267,8 +267,8 @@ def xarray_Kalman_filter(
     state_list = []
     for var in observation_variables:
         observation_list.append(ds[var].values.flatten())
-    for var in state_variables:
-        state_list.append(ds[var].isel({dim: estimation_idx}).values.flatten())
+    # for var in state_variables:
+    #     state_list.append(ds[var].isel({dim: estimation_idx}).values.flatten())
 
     initial_state_estimation, observations = input_arrays(
         observation_list=observation_list, state_list=state_list
@@ -458,8 +458,8 @@ def xarray_Kalman_filter_time_dependent(
     state_list = []
     for var in observation_variables:
         observation_list.append(ds[var].values.flatten())
-    for var in state_variables:
-        state_list.append(ds[var].isel({dim: estimation_idx}).values.flatten())
+    # for var in state_variables:
+    #     state_list.append(ds[var].isel({dim: estimation_idx}).values.flatten())
 
     unused, observations = input_arrays(
         observation_list=observation_list, state_list=state_list
