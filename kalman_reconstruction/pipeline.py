@@ -1447,20 +1447,20 @@ def to_standard_dataset(
         states     (state_name, time, latitude, longitude) float64 ...
     """
 
-    if states_varibales == "all":
-        states_varibales = list(ds.data_vars)
+    if states_variables == "all":
+        states_variables = list(ds.data_vars)
 
     result = xr.Dataset(coords=ds.coords)
     result = result.assign_coords(
         dict(
-            state_name=states_varibales,
-            # state_name_copy = states_varibales,
+            state_name=states_variables,
+            # state_name_copy = states_variables,
         )
     )
     result["states"] = xr.DataArray(
         coords=result.coords.values(), dims=result.coords.keys()
     )
-    for state in states_varibales:
+    for state in states_variables:
         assign_variable_by_double_selection(
             ds1=result,
             da2=ds[state],
