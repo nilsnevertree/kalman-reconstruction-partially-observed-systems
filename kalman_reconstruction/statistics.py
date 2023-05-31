@@ -1,8 +1,9 @@
 import numpy as np
 import scipy as sp
+import xarray as xr
 
 
-def my_mean(x):
+def my_mean(x: np.ndarray, axis: None = None, **kwargs) -> np.ndarray:
     """
     Calculate the mean of a numpy array using np.mean This functions only
     purpose is to check the CI workflows of the repository.
@@ -19,7 +20,7 @@ def my_mean(x):
         ndim=1
     """
 
-    return np.mean(x)
+    return np.mean(x, axis=axis, **kwargs)
 
 
 def RMSE(x, y):
@@ -46,6 +47,39 @@ def RMSE(x, y):
     2
     """
     return np.sqrt(np.mean((x - y) ** 2))
+
+
+def xarray_RMSE(
+    x: xr.Dataset or xr.DataArray, y: xr.Dataset or xr.DataArray, dim: str = "time"
+) -> xr.Dataset or xr.DataArray:
+    """
+    Calculate the root mean squared error (RMSE) between two arrays.
+
+    Note:
+    - Nan values will be fully ignored by this function!
+
+    Parameters:
+    -----------
+    x : xr.Dataset or xr.DataArray
+        The predicted values.
+    y : xr.Dataset or xr.DataArray
+        The true values.
+    dim : str
+        Dimension for which the RMSE shall be computed.
+
+    Returns:
+    --------
+    xr.Dataset or xr.DataArray
+        The root mean squared error between `x` and `y`.
+
+    Examples:
+    ---------
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([2, 4, 6])
+    >>> RMSE(x, y)
+    2
+    """
+    return np.sqrt(((x - y) ** 2).mean(dim=dim))
 
 
 def coverage(x, P, y, stds=0.64):
@@ -111,6 +145,48 @@ def coverage_prob(x, P, y, stds=0.64):
     """
     res = coverage(x=x, P=P, y=y, stds=stds)
     return np.sum(res) / np.size(res)
+
+
+def xarray_coverage_prob(
+    x: xr.DataArray,
+    P: xr.DataArray,
+    y: xr.DataArray,
+    stds: float = 0.64,
+    dim: str = "time",
+) -> xr.DataArray:
+    """
+    Calculate the coverage probability of a prediction interval. Note that x
+    and y should contain the same dimensions and should be of same shape.
+
+    Parameters:
+    -----------
+    x : xr.DataArray
+        The predicted values.
+    P : xr.DataArray
+        The variance or uncertainty associated with the predicted values.
+    y : xr.DataArray
+        The true values.
+    stds : float, optional
+        The number of standard deviations to consider for the prediction interval.
+        Default is 0.64, corresponding to approximately 50% coverage.
+    dim : str
+        Dimension for which the coverage probability shall be computed.
+
+    Returns:
+    --------
+    xr.DataArray
+        The coverage probability of the prediction interval.
+
+    Examples:
+    ---------
+    >>> x = np.array([1, 2, 3])
+    >>> P = np.array([1, 2, 3])
+    >>> y = np.array([2, 5, 7])
+    >>> coverage_prob(x, P, y)
+    0.3333333333333333
+    """
+    res = coverage(x=x, P=P, y=y, stds=stds)
+    return res.sum(dim=dim) / np.size(res[dim])
 
 
 def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
