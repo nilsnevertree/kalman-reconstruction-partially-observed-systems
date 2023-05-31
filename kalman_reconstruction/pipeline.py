@@ -9,7 +9,11 @@ from kalman_reconstruction.kalman_time_dependent import (
     Kalman_SEM_time_dependent,
     Kalman_smoother_time_dependent,
 )
-from kalman_reconstruction.statistics import assert_ordered_subset, ordered_like
+from kalman_reconstruction.statistics import (
+    assert_ordered_subset,
+    kalman_single_forecast,
+    ordered_like,
+)
 
 
 # Kalman_Functions
@@ -1784,27 +1788,15 @@ def forcast_from_kalman(
    # It is importatnt to make sure that the order of the dimensions is
     # `forecast_dim`, state_name, state_name_copy, ...
     result = result.transpose(forecast_dim, "state_name", "state_name_copy", ...)
-
-    # It is importatnt to make sure that the order of the dimensions is
-    # `forecast_dim`, state_name, state_name_copy, ...
-    result = result.transpose(forecast_dim, "state_name", "state_name_copy", ...)
     # For the whole forecast length, compute the new state at each forecast step and the corresponding other stuff
     for idx in range(0, forecast_length - 1):
         #TODO: This for loop might also be negelectable wit the einstein convention by using it as another indice.
-        S = result.states.isel({new_dimension: idx}).values
-        C = result.covariance.sel({new_dimension: idx}).values
-        M = result.M.values
-        Q = result.Q.values
-
-        if M.ndim == Q.ndim == 2:
-            state_forecast = np.einsum('jk,ik->ij', M, S)
-            covariance_forecast = np.einsum('jk,ijk,kj->ijk', M, C, M) + Q
-        elif M.ndim == Q.ndim == 3:
-            state_forecast = np.einsum('ijk,ik->ij', M, S)
-            covariance_forecast = np.einsum('ijk,ijk,ikj->ijk', M, C, M) + Q
-        else :
-            raise NotImplementedError("For the provided case ndim of M : {np.ndim(M)}, Q : {np.ndim(Q)}, no Implementation is yet done.")
-
+        state_forecast, covariance_forecast = kalman_single_forecast(
+            S = result.states.isel({new_dimension: idx}).values,
+            C = result.covariance.sel({new_dimension: idx}).values,
+            M = result.M.values,
+            Q = result.Q.values,
+        )
         # state forecast
         result["states"].loc[{new_dimension: idx + 1}] = state_forecast
         # covariance forecast
