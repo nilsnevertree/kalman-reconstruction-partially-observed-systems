@@ -3,15 +3,11 @@ from typing import Callable, Dict, Iterable, Tuple, Union
 import numpy as np
 import xarray as xr
 
-from kalman_reconstruction.kalman import (
-    Kalman_filter, 
-    Kalman_smoother,
-    Kalman_SEM, 
-)
+from kalman_reconstruction.kalman import Kalman_filter, Kalman_SEM, Kalman_smoother
 from kalman_reconstruction.kalman_time_dependent import (
     Kalman_filter_time_dependent,
-    Kalman_smoother_time_dependent,
     Kalman_SEM_time_dependent,
+    Kalman_smoother_time_dependent,
 )
 from kalman_reconstruction.statistics import assert_ordered_subset, ordered_like
 
@@ -554,9 +550,9 @@ def xarray_Kalman_smoother(
     The results are stored in a new xarray dataset.
 
     Note:
-    The initial state estimation will use the ``state_variables`` provided in ``ds`` 
+    The initial state estimation will use the ``state_variables`` provided in ``ds``
     and use the values of the array at position ``estimation_idx`` to create the initial state estimation used for the kalman smoother.
-    
+
     Parameters
     ----------
     ds : xarray.Dataset
@@ -762,9 +758,9 @@ def xarray_Kalman_smoother_time_dependent(
     The results are stored in a new xarray dataset.
 
     Note:
-    The initial state estimation will use the ``state_variables`` provided in ``ds`` 
+    The initial state estimation will use the ``state_variables`` provided in ``ds``
     and use the values of the array at position ``estimation_idx`` to create the initial state estimation used for the kalman smoother.
-    
+
     Parameters
     ----------
     ds : xarray.Dataset
@@ -837,7 +833,7 @@ def xarray_Kalman_smoother_time_dependent(
 
     n = len(state_variables)
     p = len(observation_variables)
-    T = np.size(ds[dim]) 
+    T = np.size(ds[dim])
     # check the dimensions:
     assert np.shape(initial_covariance_matrix) == (
         n,
@@ -1785,21 +1781,33 @@ def forcast_from_kalman(
         select_dict2={},
     )
 
+   # It is importatnt to make sure that the order of the dimensions is
+    # `forecast_dim`, state_name, state_name_copy, ...
+    result = result.transpose(forecast_dim, "state_name", "state_name_copy", ...)
+
+    # It is importatnt to make sure that the order of the dimensions is
+    # `forecast_dim`, state_name, state_name_copy, ...
+    result = result.transpose(forecast_dim, "state_name", "state_name_copy", ...)
     # For the whole forecast length, compute the new state at each forecast step and the corresponding other stuff
     for idx in range(0, forecast_length - 1):
-        # state forecast
-        state_forecast = (
-            result.M.values @ result.states.isel({new_dimension: idx}).values.T
-        )
-        result["states"].loc[{new_dimension: idx + 1}] = state_forecast.T
+        #TODO: This for loop might also be negelectable wit the einstein convention by using it as another indice.
+        S = result.states.isel({new_dimension: idx}).values
+        C = result.covariance.sel({new_dimension: idx}).values
+        M = result.M.values
+        Q = result.Q.values
 
+        if M.ndim == Q.ndim == 2:
+            state_forecast = np.einsum('jk,ik->ij', M, S)
+            covariance_forecast = np.einsum('jk,ijk,kj->ijk', M, C, M) + Q
+        elif M.ndim == Q.ndim == 3:
+            state_forecast = np.einsum('ijk,ik->ij', M, S)
+            covariance_forecast = np.einsum('ijk,ijk,ikj->ijk', M, C, M) + Q
+        else :
+            raise NotImplementedError("For the provided case ndim of M : {np.ndim(M)}, Q : {np.ndim(Q)}, no Implementation is yet done.")
+
+        # state forecast
+        result["states"].loc[{new_dimension: idx + 1}] = state_forecast
         # covariance forecast
-        covariance_forecast = (
-            result.M.values
-            @ result.covariance.sel({new_dimension: idx}).values
-            @ result.M.T.values
-            + result.Q.values
-        )
         result["covariance"].loc[{new_dimension: idx + 1}] = covariance_forecast
 
     return result
