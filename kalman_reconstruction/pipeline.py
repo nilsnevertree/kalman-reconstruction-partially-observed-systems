@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Iterable, Tuple
+from typing import Callable, Dict, Iterable, Tuple, Union
 
 import numpy as np
 import xarray as xr
@@ -1125,6 +1125,7 @@ def assign_variables_by_double_selection(
     ds2: xr.Dataset,
     select_dict1: Dict = dict(),
     select_dict2: Dict = dict(),
+    _force: bool = False,
 ) -> None:
     """
     Set all variables from ds2 into ds1 at the specified selection coordinates
@@ -1164,10 +1165,15 @@ def assign_variables_by_double_selection(
         var2     (x, y) float64 1.0 1.0 1.0 1.0 1.0 3.0 1.0 1.0 1.0
     """
 
-    # Iterate over all variables in ds2
-    for var in ds2.data_vars:
-        # Assign values from ds2 to corresponding variables in ds1 at the selection coordinates
-        ds1[var].loc[select_dict1] = ds2[var].loc[select_dict2]
+    if _force:
+        # Iterate over all variables in ds2
+        for var in ds2.data_vars:
+            # Assign values from ds2 to corresponding variables in ds1 at the selection coordinates
+            ds1[var].loc[select_dict1] = ds2[var].loc[select_dict2].to_numpy()
+    else:
+        for var in ds2.data_vars:
+            # Assign values from ds2 to corresponding variables in ds1 at the selection coordinates
+            ds1[var].loc[select_dict1] = ds2[var].loc[select_dict2]
 
 
 #  Functions for Experiments or analysis
@@ -1388,3 +1394,79 @@ def forcast_from_kalman(
         result["covariance"].loc[{new_dimension: idx + 1}] = covariance_forecast
 
     return result
+
+
+def to_standard_dataset(
+    ds: xr.Dataset, states_variables: Union[str, Iterable[str]] = "all"
+) -> xr.Dataset:
+    """
+    Convert a dataset to a standard dataset format for state variables.
+
+    This function converts the provided dataset `ds` into a standard dataset format suitable for state variables.
+    It creates a new xr.Dataset where each state variable becomes a separate coordinate in the "states" variable.
+
+    Parameters:
+        ds (xr.Dataset): The dataset to be converted.
+        states_variables (str or Iterable[str]): The state variables to include in the conversion.
+            If "all", all data variables in `ds` will be considered as state variables.
+            If a string or iterable of strings is provided, only the specified variables will be considered as state variables.
+
+    Returns:
+        xr.Dataset: The converted dataset in the standard format.
+
+        The returned dataset has the following variables:
+        - "states" (dims: ["state_name", *ds.dims]): The state variables in the standard format.
+
+        The returned dataset has the following dimensions:
+        - "state_name": The dimension representing the state variables.
+        - Additional dimensions inherited from the input dataset `ds`.
+
+        The returned dataset has the following coordinates:
+        - Coordinates inherited from the input dataset `ds`.
+        - "state_name": The values of the state variable names.
+
+    Example:
+    >>> ds = xr.Dataset(
+        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
+        coords={
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> converted_ds = to_standard_dataset(ds, states_variables=["temperature"])
+    >>> print(converted_ds)
+    <xarray.Dataset>
+    Dimensions:    (state_name: 1, time: 365, latitude: 3, longitude: 3)
+    Coordinates:
+      * time       (time) datetime64[ns] 2022-01-01 ... 2022-12-31
+      * latitude   (latitude) int64 30 40 50
+      * longitude  (longitude) int64 -120 -110 -100
+      * state_name (state_name) <U11 'temperature'
+    Data variables:
+        states     (state_name, time, latitude, longitude) float64 ...
+    """
+
+    if states_varibales == "all":
+        states_varibales = list(ds.data_vars)
+
+    result = xr.Dataset(coords=ds.coords)
+    result = result.assign_coords(
+        dict(
+            state_name=states_varibales,
+            # state_name_copy = states_varibales,
+        )
+    )
+    result["states"] = xr.DataArray(
+        coords=result.coords.values(), dims=result.coords.keys()
+    )
+    for state in states_varibales:
+        assign_variable_by_double_selection(
+            ds1=result,
+            da2=ds[state],
+            var_name="states",
+            select_dict1=(dict(state_name=state)),
+            select_dict2=dict(),
+        )
+    return result
+
