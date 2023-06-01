@@ -1,15 +1,21 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_allclose, assert_almost_equal
 
 from kalman_reconstruction.statistics import (
+    __normalize_mean__,
+    __normalize_minmax__,
+    __normalize_oneone__,
     assert_ordered_subset,
+    autocorr,
     coverage,
     coverage_prob,
     gaussian_kernel_1D,
     my_mean,
+    normalize,
     ordered_like,
     xarray_coverage_prob,
     xarray_RMSE,
@@ -275,3 +281,43 @@ def test_gaussian_kernel_1D(x=example_DataArray_01()):
     )
     assert np.shape(result1) == (2, 4)
     assert np.shape(result2) == (2, 4)
+
+
+def test_normalize_minmax():
+    arr = np.array([1, 2, 3, 4, 5])
+    expected_result = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+    assert_allclose(__normalize_minmax__(arr), expected_result)
+
+
+def test_normalize_mean():
+    arr = np.array([1, 2, 3, 4, 5])
+    expected_result = np.array([-1.41421356, -0.70710678, 0.0, 0.70710678, 1.41421356])
+    assert_allclose(__normalize_mean__(arr), expected_result)
+
+
+def test_normalize_oneone():
+    arr = np.array([1, 2, 3, 4, 5])
+    expected_result = np.array([-1.0, -0.5, 0.0, 0.5, 1.0])
+    assert_allclose(__normalize_oneone__(arr), expected_result)
+
+
+def test_normalize():
+    arr = np.array([1, 2, 3, 4, 5])
+    expected_result = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+    assert_allclose(normalize(arr, method="minmax"), expected_result)
+
+
+def test_autocorr():
+    ds = xr.Dataset(
+        {"temperature": (("time"), [1, 2, 3, 4, 5])},
+        coords={"time": pd.date_range("2022-01-01", periods=5)},
+    )
+    expected_result = 1.0
+    result_1 = autocorr(ds["temperature"], lag=1)
+    result_3 = autocorr(ds["temperature"], lag=3)
+    assert_allclose(result_1, expected_result)
+    assert_allclose(result_3, expected_result)
+
+    # not implemented for the xr.Dataset type.
+    with pytest.raises(NotImplementedError, match=r"Not implemented for type*"):
+        autocorr(ds, lag=1)

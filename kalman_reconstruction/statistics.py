@@ -441,3 +441,118 @@ def kalman_single_forecast(
             "For the provided case ndim of M : {np.ndim(M)}, Q : {np.ndim(Q)}, no Implementation is yet done."
         )
     return state_forecast, covariance_forecast
+
+
+from typing import Union
+
+import numpy as np
+import xarray as xr
+
+
+def __normalize_minmax__(self):
+    """
+    Normalize the array using min-max normalization.
+
+    Returns:
+        np.ndarray: Normalized array using min-max normalization.
+    """
+    return (self - self.min()) / (self.max() - self.min())
+
+
+def __normalize_mean__(self, ddof=0):
+    """
+    Normalize the array using mean normalization.
+
+    Parameters:
+        ddof (int, optional): Delta degrees of freedom. The divisor used in the calculation is N - ddof, where N represents the number of elements. Default is 0.
+
+    Returns:
+        np.ndarray: Normalized array using mean normalization.
+    """
+    return (self - self.mean()) / self.std(ddof=ddof)
+
+
+def __normalize_oneone__(self):
+    """
+    Normalize the array to the range [-1, 1].
+
+    Returns:
+        np.ndarray: Normalized array to the range [-1, 1].
+    """
+    return __normalize_minmax__(self) * 2 - 1
+
+
+def normalize(
+    x: Union[xr.Dataset, xr.DataArray, np.ndarray], method: str = "oneone", ddof=0
+):
+    """
+    Normalize the input array using the specified method.
+
+    Parameters:
+        x (Union[xr.Dataset, xr.DataArray, np.ndarray]): The input array to be normalized.
+        method (str, optional): The normalization method to use.
+            - a) "MinMax" or "minmax" or "01" or "0-1": Min-max normalization. Values are scaled to the range [0, 1].
+            - b) "Mean" or "mean" or "norm": Mean normalization. Values are centered around the mean and scaled by the standard deviation.
+            - c) "OneOne" or "oneone" or "11" or "1-1": Scaling to the range [-1, 1] using min-max normalization.
+            - Default of `method` is "oneone".
+        ddof (int, optional): Delta degrees of freedom.
+            - The divisor used in the calculation is N - ddof, where N represents the number of elements.
+            - Default is 0.
+            - Only used with b).
+
+    Returns:
+        np.ndarray: The normalized array.
+
+    Raises:
+        AssertionError: If an invalid normalization method is provided.
+
+    Example:
+    >>> ds = xr.Dataset(
+        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
+        coords={
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> normalized_ds = normalize(ds, method="minmax")
+    >>> print(f"Normalized dataset:\n{normalized_ds}")
+    """
+    if method in ["MinMax", "minmax", "01", "0-1"]:
+        return __normalize_minmax__(x)
+    elif method in ["Mean", "mean", "norm"]:
+        return __normalize_mean__(x)
+    elif method in ["OneOne", "oneone", "11", "1-1"]:
+        return __normalize_oneone__(x)
+    else:
+        assert False, f"Invalid normalization method: {method}"
+
+
+def autocorr(ds: xr.DataArray, lag: int = 1, dim: str = "time"):
+    """
+    Compute the lag-N autocorrelation using Pearson correlation coefficient.
+
+    Parameters:
+        ds (xr.DataArray): The object for which the autocorrelation shall be computed.
+        lag (int, optional): Number of lags to apply before performing autocorrelation. Default is 1.
+        dim (str, optional): Dimensino along which the autocorrelation shall be performed. Default is "time".
+
+    Returns:
+        float: The autocorrelation value.
+
+    Example:
+    >>> ds = xr.Dataset(
+        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
+        coords={
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> autocorr_value = autocorr(normalized_ds["temperature"], lag=2, dim="time")
+    >>> print(f"Autocorrelation value: {autocorr_value}")
+    """
+    if isinstance(ds, xr.DataArray):
+        return xr.corr(ds, ds.shift({f"{dim}": lag}))
+    else:
+        raise NotImplementedError(f"Not implemented for type: {type(ds)}.")

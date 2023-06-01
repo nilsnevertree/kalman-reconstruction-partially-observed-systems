@@ -1875,9 +1875,12 @@ def to_standard_dataset(
             # state_name_copy = states_variables,
         )
     )
-    result["states"] = xr.DataArray(
-        coords=result.coords.values(), dims=result.coords.keys()
-    )
+    # initlize the dataarray fot the states using dimensions of the first state
+    state = states_variables[0]
+    # this should only use dimensional coordinates, thus only use these list of coords:
+    coords = [result.state_name] + [ds[state].coords[var] for var in ds.dims]
+    result["states"] = xr.DataArray(coords=coords)
+    # fill it
     for state in states_variables:
         assign_variable_by_double_selection(
             ds1=result,
@@ -1887,6 +1890,75 @@ def to_standard_dataset(
             select_dict2=dict(),
         )
     return result
+
+
+def from_standard_dataset(
+    ds: xr.Dataset,
+    var_name: str = "states",
+    state_name: str = "state_name",
+    suffix: str = "",
+    prefix: str = "",
+) -> xr.Dataset:
+    """
+    Convert the DataArray ``var_name`` from a standard dataset format back to the original dataset format.
+
+    This function converts the provided dataset `ds` in the standard format back into the original dataset format.
+    It merges the state variables stored in the ``var_name`` variable back into separate data variables.
+
+    Note:
+    - The provided DataArray corresponding to ds[``var_name``] needs to have dimension "state_name" as a valid dimension or coordinate.
+    - The output names can be modified using the ``prefix`` and ``suffix`` args
+
+    Parameters:
+        ds (xr.Dataset): The dataset in the standard format.
+        var_name (str): Variable name for which the seperate data variables shall be used.
+        state_name (str): dimension and coordinate name use in the standard dataset to specify the dimension of "states" varibles.
+        suffix (str, optional) : Suffix to be appended to the variable names in the output dataset.
+            - Default is an empty string.
+        prefix (str, optional) : Prefix to be appended to the variable names in the output dataset.
+            - Default is an empty string.
+
+    Returns:
+        xr.Dataset: The converted dataset in the original format.
+
+    Example:
+    >>> ds = xr.Dataset(
+        {"weather_states": (("state_name", *ds.dims), states_data)},
+        coords={
+            "state_name": ["temperature", "pressure"],
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> converted_ds = from_standard_dataset(ds, var_name = "weather_states)
+    >>> print(converted_ds)
+    <xarray.Dataset>
+    Dimensions:    (time: 365, latitude: 3, longitude: 3)
+    Coordinates:
+      * time       (time) datetime64[ns] 2022-01-01 ... 2022-12-31
+      * latitude   (latitude) int64 30 40 50
+      * longitude  (longitude) int64 -120 -110 -100
+    Data variables:
+        temperature (time, latitude, longitude) float64 ...
+        pressure    (time, latitude, longitude) float64 ...
+    """
+    join_names = lambda l: "".join(l)
+
+    variables = ds.coords[state_name].values
+    data_vars = {
+        join_names(
+            [prefix, var, suffix]
+        ): ds[  # var names is modified by prefix and suffix
+            var_name
+        ].sel(
+            {f"{state_name}": var}
+        )  # values
+        for var in variables
+    }
+    result = xr.Dataset(data_vars, coords=ds.coords)
+    # no drop the ``state_name``
+    return result.drop(state_name)
 
 
 def perfect_forcast(
