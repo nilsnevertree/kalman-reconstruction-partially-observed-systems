@@ -10,7 +10,7 @@ dependencies:
   - pandas
   - xarray
   - tqdm
-  - sklearn
+  - scikit-learn
   ##############
   - pytest
   - pip:
