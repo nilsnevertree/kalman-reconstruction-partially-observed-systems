@@ -1,3 +1,5 @@
+from typing import Tuple, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -102,7 +104,8 @@ def plot_state_with_probability(
     stds=1.96,
     line_kwargs={},
     fill_kwargs=dict(alpha=0.3, label=None),
-):
+    output: bool = False,
+) -> Union[None, Tuple]:
     """
     Plot the state variable with its corresponding probability distribution.
 
@@ -137,10 +140,12 @@ def plot_state_with_probability(
     >>> plot_state_with_probability(ax, x, state, prob)
     """
     p = ax.plot(x_value, state, **line_kwargs)
-    ax.fill_between(
+    f = ax.fill_between(
         x_value,
         state - stds * np.sqrt(prob),
         state + stds * np.sqrt(prob),
         color=p[0].get_color(),
         **fill_kwargs,
     )
+    if output:
+        return p, f

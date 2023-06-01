@@ -343,7 +343,7 @@ def xarray_Kalman_filter_time_dependent(
     ds: xr.Dataset,
     state_variables: Iterable[str],
     observation_variables: Iterable[str],
-    initial_state_estimation : np.ndarray,
+    initial_state_estimation: np.ndarray,
     initial_covariance_matrix: np.ndarray,
     M: np.ndarray,
     Q: np.ndarray,
@@ -880,7 +880,16 @@ def xarray_Kalman_smoother_time_dependent(
     # ---------------
     # run the Kalman_SEM algorithm
     # ---------------
-    (x_f, P_f, x_a, P_a, x_s, P_s, log_likelihod, P_s_lag) = Kalman_smoother_time_dependent(
+    (
+        x_f,
+        P_f,
+        x_a,
+        P_a,
+        x_s,
+        P_s,
+        log_likelihod,
+        P_s_lag,
+    ) = Kalman_smoother_time_dependent(
         y=observations,
         x0=initial_state_estimation,
         P0=initial_covariance_matrix,
@@ -1785,17 +1794,17 @@ def forcast_from_kalman(
         select_dict2={},
     )
 
-   # It is importatnt to make sure that the order of the dimensions is
+    # It is importatnt to make sure that the order of the dimensions is
     # `forecast_dim`, state_name, state_name_copy, ...
     result = result.transpose(forecast_dim, "state_name", "state_name_copy", ...)
     # For the whole forecast length, compute the new state at each forecast step and the corresponding other stuff
     for idx in range(0, forecast_length - 1):
-        #TODO: This for loop might also be negelectable wit the einstein convention by using it as another indice.
+        # TODO: This for loop might also be negelectable wit the einstein convention by using it as another indice.
         state_forecast, covariance_forecast = kalman_single_forecast(
-            S = result.states.isel({new_dimension: idx}).values,
-            C = result.covariance.sel({new_dimension: idx}).values,
-            M = result.M.values,
-            Q = result.Q.values,
+            S=result.states.isel({new_dimension: idx}).values,
+            C=result.covariance.sel({new_dimension: idx}).values,
+            M=result.M.values,
+            Q=result.Q.values,
         )
         # state forecast
         result["states"].loc[{new_dimension: idx + 1}] = state_forecast
