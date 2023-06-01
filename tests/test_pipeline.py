@@ -4,7 +4,11 @@ import xarray as xr
 
 from numpy.testing import assert_almost_equal
 
-from kalman_reconstruction.pipeline import multiple_runs_of_func
+from kalman_reconstruction.pipeline import (
+    expand_and_assign_coords,
+    multiple_runs_of_func,
+    run_function_on_multiple_subdatasets,
+)
 
 
 def simple_function_01(ds, var="var", var_new="var_new"):
@@ -93,6 +97,81 @@ def example_dataset_02():
     )
 
 
+def multiply_by_scalar(ds: xr.Dataset, scalar: float) -> xr.Dataset:
+    return ds * scalar
+
+
+def test_expand_and_assign_coords():
+    # Create example datasets
+    ds1 = xr.Dataset(
+        {"var1": (("x", "y"), np.random.rand(10, 20))},
+        coords={"x": range(10), "y": range(20)},
+    )
+
+    ds2 = xr.Dataset({"var2": ("z", np.random.rand(5))}, coords={"z": range(5)})
+
+    select_dict = {"z": 2}
+
+    # Call the function
+    result = expand_and_assign_coords(ds1, ds2, select_dict)
+
+    # Assert the dimensions and coordinates of the result
+    assert result.dims == {"z": 1, "x": 10, "y": 20}
+    assert set(result.coords) == {"x", "y", "z"}
+
+    # Assert the values of the variables in the result
+    assert np.allclose(result["var1"].values, ds1["var1"].expand_dims("z").values)
+    assert np.allclose(result["x"].values, ds1["x"].values)
+    assert np.allclose(result["y"].values, ds1["y"].values)
+    assert np.allclose(result["z"].values, ds2["z"].isel(**select_dict).values)
+
+
+ds = xr.Dataset(
+    {
+        "data": (
+            ("x", "y", "time"),
+            [
+                [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+                [[16, 17, 18, 19, 20], [21, 22, 23, 24, 25], [26, 27, 28, 29, 30]],
+            ],
+        )
+    },
+    coords={"time": range(5), "x": [2, 3], "y": [5, 6, 7]},
+)
+
+# Define subdataset selections
+subdataset_selections = [{"x": 2, "y": 5}, {"x": 3, "y": 6}]
+
+# Define function arguments
+func_kwargs = {"scalar": 2}
+
+# Define processing function
+processing_function = multiply_by_scalar
+
+# Call the function
+ds_result = run_function_on_multiple_subdatasets(
+    processing_function=processing_function,
+    parent_dataset=ds,
+    subdataset_selections=subdataset_selections,
+    func_kwargs=func_kwargs,
+)
+
+# Expected result
+ds_expected = xr.Dataset(
+    {
+        "data": (
+            ("x", "y", "time"),
+            [
+                [[2, 4, 6, 8, 10], [np.nan, np.nan, np.nan, np.nan, np.nan]],
+                [[np.nan, np.nan, np.nan, np.nan, np.nan], [42, 44, 46, 48, 50]],
+            ],
+        )
+    },
+    coords={"time": range(5), "x": [2, 3], "y": [5, 6]},
+)
+
+# Assert equality
+xr.testing.assert_equal(ds_result, ds_expected)
 # @pytest.mark.parametrize("example_dataset", ["example_dataset_01", "example_dataset_02"])
 # def test_multiple_runs_of_func(example_dataset):
 #     ds = example_dataset  # Evaluate the example dataset fixture name

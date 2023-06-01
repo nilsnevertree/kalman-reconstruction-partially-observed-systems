@@ -1351,7 +1351,7 @@ def expand_and_assign_coords(
         try:
             ds1_expanded = ds1.assign_coords(**ds2.isel(select_dict).coords)
         finally:
-            pass
+            raise NotImplementedError("This seems not to be implemented!")
     ds1_expanded = ds1_expanded.expand_dims(selection_vars)
 
     return ds1_expanded
@@ -1657,6 +1657,88 @@ def multiple_runs_of_func(
         )
 
     return result
+
+
+def run_function_on_multiple_subdatasets(
+    processing_function: Callable[[xr.Dataset], xr.Dataset],
+    parent_dataset: xr.Dataset,
+    subdataset_selections: Iterable[Dict],
+    func_args: Dict = {},
+    func_kwargs: Dict = {},
+) -> xr.Dataset:
+    """
+    Apply a processing function to multiple subdatasets and merge the results.
+
+    This function applies the provided processing function to multiple subdatasets from the parent dataset.
+    It uses the subdataset_selections iterable to select specific subsets of data from the parent dataset.
+    The processing function should take an xr.Dataset as its input and return an xr.Dataset as its output.
+
+    Note:
+    - the resulting arrays contain np.nan wherever the
+
+    Parameters:
+        processing_function (Callable): The processing function to be applied to each subdataset.
+            The function should take an xr.Dataset as its input and return an xr.Dataset as its output.
+        parent_dataset (xr.Dataset): The parent dataset containing the subdatasets to process.
+        subdataset_selections (Iterable[Dict]): The iterable of selection dictionaries for each subdataset.
+            Each dictionary specifies the subset of data to select from the parent dataset.
+        func_args (Dict, optional): Additional positional arguments to be passed to the processing function.
+            Default is an empty dictionary.
+        func_kwargs (Dict, optional): Additional keyword arguments to be passed to the processing function.
+            The 'ds' argument is automatically updated with the selected subdataset.
+            Default is an empty dictionary.
+
+    Returns:
+        xr.Dataset: The merged dataset containing the results of applying the processing function to each subdataset.
+
+    Example:
+        >>> def multiply_by_scalar(ds: xr.Dataset, scalar: float) -> xr.Dataset:
+        ...     return ds * scalar
+        >>> ds = xr.Dataset(
+        ...     {"data": (("x", "y", "time"), [
+        ...         [[1, 2, 3, 4], [6, 7, 8, 9], [11, 12, 13, 14]],
+        ...         [[16, 17, 18, 19], [21, 22, 23, 24], [26, 27, 28, 29]],
+        ...     ])},
+        ...     coords={"time": range(4), "x": [2, 3], "y": [5, 6, 7]},
+        ... )
+        >>> subdataset_selections = [{"x": 2, "y": 5}, {"x": 3, "y": 6}]
+        >>> func_kwargs = {"scalar": 2}
+        >>> processing_function = multiply_by_scalar
+        >>> result = run_function_on_multiple_subdatasets(
+        ...     processing_function=processing_function,
+        ...     parent_dataset=ds,
+        ...     subdataset_selections=subdataset_selections,
+        ...     func_kwargs=func_kwargs,
+        ... )
+        >>> print(result)
+        <xarray.Dataset>
+        Dimensions:  (time: 4, x: 2, y: 2)
+        Coordinates:
+        * time     (time) int32 0 1 2 3
+        * x        (x) int32 2 3
+        * y        (y) int32 5 6
+        Data variables:
+            data     (x, y, time) float64 2.0 4.0 6.0 8.0 nan ... 42.0 44.0 46.0 48.0
+    """
+    result = []
+    for subdataset_selection in subdataset_selections:
+        subdataset = parent_dataset.sel(subdataset_selection, drop=True)
+        func_kwargs.update(ds=subdataset)
+        try:
+            res = processing_function(*func_args, **func_kwargs)
+            if not isinstance(res, xr.Dataset):
+                raise ValueError(
+                    f"The processing function should return an xr.Dataset, but it returned {type(res)}"
+                )
+        except Exception as e:
+            raise ValueError(f"Error occurred during processing: {e}") from e
+
+        res = expand_and_assign_coords(
+            res, parent_dataset, select_dict=subdataset_selection
+        )
+        result.append(res)
+
+    return xr.merge(result)
 
 
 # Analysis functions
