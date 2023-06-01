@@ -9,6 +9,8 @@ dependencies:
   - scipy
   - pandas
   - xarray
+  - tqdm
+  - sklearn
   ##############
   - pytest
   - pip:
