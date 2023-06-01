@@ -25,7 +25,7 @@ def my_mean(x: np.ndarray, axis: None = None, **kwargs) -> np.ndarray:
     return np.mean(x, axis=axis, **kwargs)
 
 
-def RMSE(x : np.ndarray, y : np.ndarray)-> np.ndarray:
+def RMSE(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Calculate the root mean squared error (RMSE) between two arrays.
 
@@ -52,7 +52,9 @@ def RMSE(x : np.ndarray, y : np.ndarray)-> np.ndarray:
 
 
 def xarray_RMSE(
-    x: Union[xr.Dataset, xr.DataArray], y: Union[xr.Dataset, xr.DataArray], dim: str = "time"
+    x: Union[xr.Dataset, xr.DataArray],
+    y: Union[xr.Dataset, xr.DataArray],
+    dim: str = "time",
 ) -> Union[xr.Dataset, xr.DataArray]:
     """
     Calculate the root mean squared error (RMSE) between two arrays.
@@ -84,7 +86,9 @@ def xarray_RMSE(
     return np.sqrt(((x - y) ** 2).mean(dim=dim))
 
 
-def coverage(x : np.ndarray, P : np.ndarray, y : np.ndarray, stds : float=0.64) -> np.ndarray:
+def coverage(
+    x: np.ndarray, P: np.ndarray, y: np.ndarray, stds: float = 0.64
+) -> np.ndarray:
     """
     Calculate the coverage of a prediction interval.
 
@@ -116,7 +120,9 @@ def coverage(x : np.ndarray, P : np.ndarray, y : np.ndarray, stds : float=0.64) 
     return (y >= x - stds * np.sqrt(P)) & (y <= x + stds * np.sqrt(P))
 
 
-def coverage_prob(x : np.ndarray, P : np.ndarray, y : np.ndarray, stds: float=0.64) -> np.ndarray:
+def coverage_prob(
+    x: np.ndarray, P: np.ndarray, y: np.ndarray, stds: float = 0.64
+) -> np.ndarray:
     """
     Calculate the coverage probability of a prediction interval.
 
@@ -191,7 +197,9 @@ def xarray_coverage_prob(
     return res.sum(dim=dim) / np.size(res[dim])
 
 
-def gaussian_weights_2D(x : np.ndarray, y : np.ndarray, axis: int=0, alpha: float=0.2) -> np.ndarray:
+def gaussian_weights_2D(
+    x: np.ndarray, y: np.ndarray, axis: int = 0, alpha: float = 0.2
+) -> np.ndarray:
     """
     Creates a Gaussian weights for a 2D-array x centered at positions given by
     y. The weights will be computed along the specified axis.
@@ -232,7 +240,7 @@ def gaussian_weights_2D(x : np.ndarray, y : np.ndarray, axis: int=0, alpha: floa
     return weights
 
 
-def broadcast_along_axis_as(x : np.ndarray, y : np.ndarray, axis : int):
+def broadcast_along_axis_as(x: np.ndarray, y: np.ndarray, axis: int):
     """
     Broadcasts 1D array x to an array of same shape as y, containing the given
     axis. The length of x need to be the same as the length of y along the
@@ -279,7 +287,13 @@ def broadcast_along_axis_as(x : np.ndarray, y : np.ndarray, axis : int):
     return res
 
 
-def gaussian_kernel_1D(x  : np.ndarray, center_idx : int, axis: int=0, sigma : float=100, same_output_shape : bool=False) -> np.ndarray:
+def gaussian_kernel_1D(
+    x: np.ndarray,
+    center_idx: int,
+    axis: int = 0,
+    sigma: float = 100,
+    same_output_shape: bool = False,
+) -> np.ndarray:
     """
     Creates a Gaussian weights for a N dimensional array x centered at index y
     along specified axis.
@@ -325,7 +339,7 @@ def gaussian_kernel_1D(x  : np.ndarray, center_idx : int, axis: int=0, sigma : f
         return broadcast_along_axis_as(kernel, x, axis=axis)
 
 
-def ordered_like(a : list, b : list) -> list:
+def ordered_like(a: list, b: list) -> list:
     """
     Sorts the elements in list 'a' based on their presence in list 'b' while
     preserving the order.
@@ -347,7 +361,7 @@ def ordered_like(a : list, b : list) -> list:
     return sorted(a, key=lambda x: (x not in b, b.index(x) if x in b else False))
 
 
-def assert_ordered_subset(a : list, b : list) -> list:
+def assert_ordered_subset(a: list, b: list) -> list:
     """
     Asserts that list 'a' is a subset of list 'b' and that the elements in 'a'
     are ordered like in 'b'.
@@ -374,7 +388,9 @@ def assert_ordered_subset(a : list, b : list) -> list:
     assert a == [x for x in b if x in a], "a is not ordered like of b"
 
 
-def kalman_single_forecast(S: np.ndarray, C: np.ndarray, M: np.ndarray, Q: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def kalman_single_forecast(
+    S: np.ndarray, C: np.ndarray, M: np.ndarray, Q: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Function to calculate the forecast of a system using the Kalman equation.
 
@@ -415,11 +431,128 @@ def kalman_single_forecast(S: np.ndarray, C: np.ndarray, M: np.ndarray, Q: np.nd
         NotImplementedError: If the provided dimensionality of M and Q is not supported.
     """
     if M.ndim == Q.ndim == 2:
-        state_forecast = np.einsum('jk,ik->ij', M, S)
-        covariance_forecast = np.einsum('jk,ijk,kj->ijk', M, C, M) + Q
+        state_forecast = np.einsum("jk,ik->ij", M, S)
+        covariance_forecast = np.einsum("jk,ijk,kj->ijk", M, C, M) + Q
     elif M.ndim == Q.ndim == 3:
-        state_forecast = np.einsum('ijk,ik->ij', M, S)
-        covariance_forecast = np.einsum('ijk,ijk,ikj->ijk', M, C, M) + Q
-    else :
-        raise NotImplementedError("For the provided case ndim of M : {np.ndim(M)}, Q : {np.ndim(Q)}, no Implementation is yet done.")
+        state_forecast = np.einsum("ijk,ik->ij", M, S)
+        covariance_forecast = np.einsum("ijk,ijk,ikj->ijk", M, C, M) + Q
+    else:
+        raise NotImplementedError(
+            "For the provided case ndim of M : {np.ndim(M)}, Q : {np.ndim(Q)}, no Implementation is yet done."
+        )
     return state_forecast, covariance_forecast
+
+
+from typing import Union
+
+import numpy as np
+import xarray as xr
+
+
+def __normalize_minmax__(self):
+    """
+    Normalize the array using min-max normalization.
+
+    Returns:
+        np.ndarray: Normalized array using min-max normalization.
+    """
+    return (self - self.min()) / (self.max() - self.min())
+
+
+def __normalize_mean__(self, ddof=0):
+    """
+    Normalize the array using mean normalization.
+
+    Parameters:
+        ddof (int, optional): Delta degrees of freedom. The divisor used in the calculation is N - ddof, where N represents the number of elements. Default is 0.
+
+    Returns:
+        np.ndarray: Normalized array using mean normalization.
+    """
+    return (self - self.mean()) / self.std(ddof=ddof)
+
+
+def __normalize_oneone__(self):
+    """
+    Normalize the array to the range [-1, 1].
+
+    Returns:
+        np.ndarray: Normalized array to the range [-1, 1].
+    """
+    return __normalize_minmax__(self) * 2 - 1
+
+
+def normalize(
+    x: Union[xr.Dataset, xr.DataArray, np.ndarray], method: str = "oneone", ddof=0
+):
+    """
+    Normalize the input array using the specified method.
+
+    Parameters:
+        x (Union[xr.Dataset, xr.DataArray, np.ndarray]): The input array to be normalized.
+        method (str, optional): The normalization method to use.
+            - a) "MinMax" or "minmax" or "01" or "0-1": Min-max normalization. Values are scaled to the range [0, 1].
+            - b) "Mean" or "mean" or "norm": Mean normalization. Values are centered around the mean and scaled by the standard deviation.
+            - c) "OneOne" or "oneone" or "11" or "1-1": Scaling to the range [-1, 1] using min-max normalization.
+            - Default of `method` is "oneone".
+        ddof (int, optional): Delta degrees of freedom.
+            - The divisor used in the calculation is N - ddof, where N represents the number of elements.
+            - Default is 0.
+            - Only used with b).
+
+    Returns:
+        np.ndarray: The normalized array.
+
+    Raises:
+        AssertionError: If an invalid normalization method is provided.
+
+    Example:
+    >>> ds = xr.Dataset(
+        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
+        coords={
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> normalized_ds = normalize(ds, method="minmax")
+    >>> print(f"Normalized dataset:\n{normalized_ds}")
+    """
+    if method in ["MinMax", "minmax", "01", "0-1"]:
+        return __normalize_minmax__(x)
+    elif method in ["Mean", "mean", "norm"]:
+        return __normalize_mean__(x)
+    elif method in ["OneOne", "oneone", "11", "1-1"]:
+        return __normalize_oneone__(x)
+    else:
+        assert False, f"Invalid normalization method: {method}"
+
+
+def autocorr(ds: xr.DataArray, lag: int = 1, dim: str = "time"):
+    """
+    Compute the lag-N autocorrelation using Pearson correlation coefficient.
+
+    Parameters:
+        ds (xr.DataArray): The object for which the autocorrelation shall be computed.
+        lag (int, optional): Number of lags to apply before performing autocorrelation. Default is 1.
+        dim (str, optional): Dimensino along which the autocorrelation shall be performed. Default is "time".
+
+    Returns:
+        float: The autocorrelation value.
+
+    Example:
+    >>> ds = xr.Dataset(
+        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
+        coords={
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> autocorr_value = autocorr(normalized_ds["temperature"], lag=2, dim="time")
+    >>> print(f"Autocorrelation value: {autocorr_value}")
+    """
+    if isinstance(ds, xr.DataArray):
+        return xr.corr(ds, ds.shift({f"{dim}": lag}))
+    else:
+        raise NotImplementedError(f"Not implemented for type: {type(ds)}.")
