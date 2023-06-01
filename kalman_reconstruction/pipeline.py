@@ -343,7 +343,7 @@ def xarray_Kalman_filter_time_dependent(
     ds: xr.Dataset,
     state_variables: Iterable[str],
     observation_variables: Iterable[str],
-    initial_state_estimation : np.ndarray,
+    initial_state_estimation: np.ndarray,
     initial_covariance_matrix: np.ndarray,
     M: np.ndarray,
     Q: np.ndarray,
@@ -880,7 +880,16 @@ def xarray_Kalman_smoother_time_dependent(
     # ---------------
     # run the Kalman_SEM algorithm
     # ---------------
-    (x_f, P_f, x_a, P_a, x_s, P_s, log_likelihod, P_s_lag) = Kalman_smoother_time_dependent(
+    (
+        x_f,
+        P_f,
+        x_a,
+        P_a,
+        x_s,
+        P_s,
+        log_likelihod,
+        P_s_lag,
+    ) = Kalman_smoother_time_dependent(
         y=observations,
         x0=initial_state_estimation,
         P0=initial_covariance_matrix,
@@ -1785,17 +1794,17 @@ def forcast_from_kalman(
         select_dict2={},
     )
 
-   # It is importatnt to make sure that the order of the dimensions is
+    # It is importatnt to make sure that the order of the dimensions is
     # `forecast_dim`, state_name, state_name_copy, ...
     result = result.transpose(forecast_dim, "state_name", "state_name_copy", ...)
     # For the whole forecast length, compute the new state at each forecast step and the corresponding other stuff
     for idx in range(0, forecast_length - 1):
-        #TODO: This for loop might also be negelectable wit the einstein convention by using it as another indice.
+        # TODO: This for loop might also be negelectable wit the einstein convention by using it as another indice.
         state_forecast, covariance_forecast = kalman_single_forecast(
-            S = result.states.isel({new_dimension: idx}).values,
-            C = result.covariance.sel({new_dimension: idx}).values,
-            M = result.M.values,
-            Q = result.Q.values,
+            S=result.states.isel({new_dimension: idx}).values,
+            C=result.covariance.sel({new_dimension: idx}).values,
+            M=result.M.values,
+            Q=result.Q.values,
         )
         # state forecast
         result["states"].loc[{new_dimension: idx + 1}] = state_forecast
@@ -1866,9 +1875,12 @@ def to_standard_dataset(
             # state_name_copy = states_variables,
         )
     )
-    result["states"] = xr.DataArray(
-        coords=result.coords.values(), dims=result.coords.keys()
-    )
+    # initlize the dataarray fot the states using dimensions of the first state
+    state = states_variables[0]
+    # this should only use dimensional coordinates, thus only use these list of coords:
+    coords = [result.state_name] + [ds[state].coords[var] for var in ds.dims]
+    result["states"] = xr.DataArray(coords=coords)
+    # fill it
     for state in states_variables:
         assign_variable_by_double_selection(
             ds1=result,
@@ -1878,6 +1890,55 @@ def to_standard_dataset(
             select_dict2=dict(),
         )
     return result
+
+
+def from_standard_dataset(
+    ds: xr.Dataset, var_name: str = "states", state_name: str = "state_name"
+) -> xr.Dataset:
+    """
+    Convert the DataArray ``var_name`` from a standard dataset format back to the original dataset format.
+
+    This function converts the provided dataset `ds` in the standard format back into the original dataset format.
+    It merges the state variables stored in the ``var_name`` variable back into separate data variables.
+
+    Note:
+    The provided DataArray corresponding to ds[``var_name``] needs to have dimension "state_name" as a valid dimension or coordinate.
+
+    Parameters:
+        ds (xr.Dataset): The dataset in the standard format.
+        var_name (str): Variable name for which the seperate data variables shall be used.
+        state_name (str): dimension and coordinate name use in the standard dataset to specify the dimension of "states" varibles.
+
+    Returns:
+        xr.Dataset: The converted dataset in the original format.
+
+    Example:
+    >>> ds = xr.Dataset(
+        {"weather_states": (("state_name", *ds.dims), states_data)},
+        coords={
+            "state_name": ["temperature", "pressure"],
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> converted_ds = from_standard_dataset(ds, var_name = "weather_states)
+    >>> print(converted_ds)
+    <xarray.Dataset>
+    Dimensions:    (time: 365, latitude: 3, longitude: 3)
+    Coordinates:
+      * time       (time) datetime64[ns] 2022-01-01 ... 2022-12-31
+      * latitude   (latitude) int64 30 40 50
+      * longitude  (longitude) int64 -120 -110 -100
+    Data variables:
+        temperature (time, latitude, longitude) float64 ...
+        pressure    (time, latitude, longitude) float64 ...
+    """
+    variables = ds.coords[state_name].values
+    data_vars = {var: ds[var_name].sel({f"{state_name}": var}) for var in variables}
+    result = xr.Dataset(data_vars, coords=ds.coords)
+    # no drop the ``state_name``
+    return result.drop(state_name)
 
 
 def perfect_forcast(
