@@ -1,13 +1,17 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_allclose, assert_almost_equal
 
 from kalman_reconstruction.pipeline import (
     expand_and_assign_coords,
+    from_standard_dataset,
     multiple_runs_of_func,
+    perfect_forcast,
     run_function_on_multiple_subdatasets,
+    to_standard_dataset,
 )
 
 
@@ -126,52 +130,192 @@ def test_expand_and_assign_coords():
     assert np.allclose(result["z"].values, ds2["z"].isel(**select_dict).values)
 
 
-ds = xr.Dataset(
-    {
-        "data": (
-            ("x", "y", "time"),
+def test_run_function_on_multiple_subdatasets():
+    ds = xr.Dataset(
+        {
+            "data": (
+                ("x", "y", "time"),
+                [
+                    [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
+                    [[16, 17, 18, 19, 20], [21, 22, 23, 24, 25], [26, 27, 28, 29, 30]],
+                ],
+            )
+        },
+        coords={"time": range(5), "x": [2, 3], "y": [5, 6, 7]},
+    )
+
+    # Define subdataset selections
+    subdataset_selections = [{"x": 2, "y": 5}, {"x": 3, "y": 6}]
+
+    # Define function arguments
+    func_kwargs = {"scalar": 2}
+
+    # Define processing function
+    processing_function = multiply_by_scalar
+
+    # Call the function
+    ds_result = run_function_on_multiple_subdatasets(
+        processing_function=processing_function,
+        parent_dataset=ds,
+        subdataset_selections=subdataset_selections,
+        func_kwargs=func_kwargs,
+    )
+
+    # Expected result
+    ds_expected = xr.Dataset(
+        {
+            "data": (
+                ("x", "y", "time"),
+                [
+                    [[2, 4, 6, 8, 10], [np.nan, np.nan, np.nan, np.nan, np.nan]],
+                    [[np.nan, np.nan, np.nan, np.nan, np.nan], [42, 44, 46, 48, 50]],
+                ],
+            )
+        },
+        coords={"time": range(5), "x": [2, 3], "y": [5, 6]},
+    )
+
+    # Assert equality
+    xr.testing.assert_equal(ds_result, ds_expected)
+
+
+def test_to_standard_dataset():
+    temperature_data = np.random.rand(365, 3, 3)
+    ds = xr.Dataset(
+        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
+        coords={
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    converted_ds = to_standard_dataset(ds, states_variables=["temperature"])
+
+    assert "states" in converted_ds.variables
+    assert converted_ds.dims == {
+        "state_name": 1,
+        "time": 365,
+        "latitude": 3,
+        "longitude": 3,
+    }
+    assert "state_name" in converted_ds.coords
+    assert converted_ds.coords["state_name"].values == ["temperature"]
+
+
+def test_from_standard_dataset():
+    states_data = np.random.rand(2, 365, 3, 3)
+    ds = xr.Dataset(
+        {
+            "weather_states": (
+                ("state_name", "time", "latitude", "longitude"),
+                states_data,
+            )
+        },
+        coords={
+            "state_name": ["temperature", "pressure"],
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    converted_ds = from_standard_dataset(ds, var_name="weather_states")
+
+    assert "temperature" in converted_ds.variables
+    assert "pressure" in converted_ds.variables
+    assert converted_ds.dims == {
+        "time": 365,
+        "latitude": 3,
+        "longitude": 3,
+    }
+    assert "state_name" not in converted_ds.coords
+
+
+def test_perfect_forcast():
+    states_data = np.array(
+        [
             [
-                [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]],
-                [[16, 17, 18, 19, 20], [21, 22, 23, 24, 25], [26, 27, 28, 29, 30]],
+                0,
+                0,
+                0,
             ],
-        )
-    },
-    coords={"time": range(5), "x": [2, 3], "y": [5, 6, 7]},
-)
-
-# Define subdataset selections
-subdataset_selections = [{"x": 2, "y": 5}, {"x": 3, "y": 6}]
-
-# Define function arguments
-func_kwargs = {"scalar": 2}
-
-# Define processing function
-processing_function = multiply_by_scalar
-
-# Call the function
-ds_result = run_function_on_multiple_subdatasets(
-    processing_function=processing_function,
-    parent_dataset=ds,
-    subdataset_selections=subdataset_selections,
-    func_kwargs=func_kwargs,
-)
-
-# Expected result
-ds_expected = xr.Dataset(
-    {
-        "data": (
-            ("x", "y", "time"),
             [
-                [[2, 4, 6, 8, 10], [np.nan, np.nan, np.nan, np.nan, np.nan]],
-                [[np.nan, np.nan, np.nan, np.nan, np.nan], [42, 44, 46, 48, 50]],
+                0,
+                1,
+                2,
             ],
-        )
-    },
-    coords={"time": range(5), "x": [2, 3], "y": [5, 6]},
-)
+            [
+                0,
+                2,
+                4,
+            ],
+            [
+                0,
+                3,
+                6,
+            ],
+            [
+                0,
+                4,
+                8,
+            ],
+        ],
+        dtype=float,
+    )
+    ds = xr.Dataset(
+        {"states_model": (("time", "state_name"), states_data)},
+        coords={
+            "time": np.arange(5),
+            "state_name": ["state1", "state2", "state3"],
+        },
+    )
+    result = perfect_forcast(
+        ds, states_var_name="states_model", forecast_length=4, forecast_dim="time"
+    )
 
-# Assert equality
-xr.testing.assert_equal(ds_result, ds_expected)
+    assert "states_model" in result.variables
+    assert result.dims == {
+        "horizon": 4,
+        "time": 5,
+        "state_name": 3,
+    }
+    assert "horizon" in result.coords
+    assert "time" in result.coords
+    assert "state_name" in result.coords
+    assert_allclose(result.coords["horizon"], np.arange(4))
+
+    # the expected values are to be np.nan when the horizon exceeds the forecast.
+    expected = np.array(
+        [
+            [[0.0, 0.0, 0.0, 0.0], [0.0, 1.0, 2.0, 3.0], [0.0, 2.0, 4.0, 6.0]],
+            [[0.0, 0.0, 0.0, 0.0], [1.0, 2.0, 3.0, 4.0], [2.0, 4.0, 6.0, 8.0]],
+            [[0.0, 0.0, 0.0, np.nan], [2.0, 3.0, 4.0, np.nan], [4.0, 6.0, 8.0, np.nan]],
+            [
+                [0.0, 0.0, np.nan, np.nan],
+                [3.0, 4.0, np.nan, np.nan],
+                [6.0, 8.0, np.nan, np.nan],
+            ],
+            [
+                [0.0, np.nan, np.nan, np.nan],
+                [4.0, np.nan, np.nan, np.nan],
+                [8.0, np.nan, np.nan, np.nan],
+            ],
+        ]
+    )
+    # all values that would be greated than 30 need to be nans
+
+    should = xr.Dataset(
+        {"states_model": (("time", "state_name", "horizon"), expected)},
+        coords={
+            "time": np.arange(5),
+            "state_name": ["state1", "state2", "state3"],
+            "horizon": np.arange(4),
+        },
+    )
+    should = should.transpose("horizon", "time", "state_name")
+    # print(should.states_model)
+    xr.testing.assert_allclose(result, should)
+
+
 # @pytest.mark.parametrize("example_dataset", ["example_dataset_01", "example_dataset_02"])
 # def test_multiple_runs_of_func(example_dataset):
 #     ds = example_dataset  # Evaluate the example dataset fixture name

@@ -2040,7 +2040,7 @@ def from_standard_dataset(
     }
     result = xr.Dataset(data_vars, coords=ds.coords)
     # no drop the ``state_name``
-    return result.drop(state_name)
+    return result.drop_vars(state_name)
 
 
 def perfect_forcast(
@@ -2059,7 +2059,9 @@ def perfect_forcast(
 
     Note:
     The function expects a dataset of the same form as the `to_standard_dataset` function returns:
-    - states array with dimensions ["forecast_dim", "state_name"].
+    - States array with dimensions [``forecast_dim``, "state_name"].
+    Note that the forecast_length includes the current timestep.
+    - ``forecast_length`` = 1 returns the same dataset with additional coordinate ``new_dimesion`` and value for it.
 
     Parameters:
         ds (xr.Dataset): The dataset containing the states.
@@ -2099,6 +2101,15 @@ def perfect_forcast(
     >>> # Generate perfect forecasts
     >>> result = perfect_forecast(ds, states_var_name="states_model", forecast_length=5, forecast_dim="time)
     >>> print(result)
+    <xarray.Dataset>
+    Dimensions:       (time: 10, state_name: 3, horizon: 5)
+    Coordinates:
+    * time          (time) int32 0 1 2 3 4 5 6 7 8 9
+    * state_name    (state_name) <U6 'state1' 'state2' 'state3'
+    * horizon       (horizon) int32 0 1 2 3 4
+    Data variables:
+        states_model  (horizon, time, state_name) float64 0.0 1.0 2.0 ... nan nan
+        other_var     (horizon, time) float64 nan nan nan nan ... nan nan nan nan
     """
     # first create the corresponding result Dataset
     # copy coords from kalman_SEM results
@@ -2116,33 +2127,34 @@ def perfect_forcast(
     assign_variable_by_double_selection(
         ds1=result,
         da2=ds[states_var_name],
-        var_name="states",
+        var_name=states_var_name,
         select_dict1={new_dimension: 0},
         select_dict2={},
     )
 
     maximum_forecast_index = len(ds[forecast_dim])
     # For the whole forecast length, compute the new state at each forecast step and the corresponding other stuff
-    for idx in range(0, forecast_length - 1):
+    for idx in range(1, forecast_length):
         # state forecast
-        # create time_selection:
-        true_range = result[forecast_dim].isel({forecast_dim: slice(idx + 1, -1)})
-        true_select_dict = {
+        # create insert range. it will get less and less with the horizon length.:
+        insert_range = result[forecast_dim].isel(
+            {forecast_dim: slice(0, maximum_forecast_index - idx)}
+        )
+        insert_select_dict = {
             new_dimension: idx,
-            forecast_dim: true_range,
+            forecast_dim: insert_range,
         }
-        new_forcast_range = result[forecast_dim].isel({forecast_dim: slice(idx, -2)})
-        new_select_dict = {
-            new_dimension: idx + 1,
-            forecast_dim: new_forcast_range,
+        # takes from old values of horizon == 0
+        origin_forcast_range = result[forecast_dim].isel(
+            {forecast_dim: slice(idx, maximum_forecast_index)}
+        )
+        origin_select_dict = {
+            new_dimension: 0,
+            forecast_dim: origin_forcast_range,
         }
-
-        assign_variables_by_double_selection(
-            ds1=result,
-            ds2=result,
-            select_dict1=new_select_dict,
-            select_dict2=true_select_dict,
-            _force=True,
+        # state forecast
+        result[states_var_name].loc[insert_select_dict] = (
+            result[states_var_name].loc[origin_select_dict].values
         )
 
     return result
