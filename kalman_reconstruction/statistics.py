@@ -1,8 +1,11 @@
+from typing import Tuple, Union
+
 import numpy as np
 import scipy as sp
+import xarray as xr
 
 
-def my_mean(x):
+def my_mean(x: np.ndarray, axis: None = None, **kwargs) -> np.ndarray:
     """
     Calculate the mean of a numpy array using np.mean This functions only
     purpose is to check the CI workflows of the repository.
@@ -19,10 +22,10 @@ def my_mean(x):
         ndim=1
     """
 
-    return np.mean(x)
+    return np.mean(x, axis=axis, **kwargs)
 
 
-def RMSE(x, y):
+def RMSE(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Calculate the root mean squared error (RMSE) between two arrays.
 
@@ -48,7 +51,44 @@ def RMSE(x, y):
     return np.sqrt(np.mean((x - y) ** 2))
 
 
-def coverage(x, P, y, stds=0.64):
+def xarray_RMSE(
+    x: Union[xr.Dataset, xr.DataArray],
+    y: Union[xr.Dataset, xr.DataArray],
+    dim: str = "time",
+) -> Union[xr.Dataset, xr.DataArray]:
+    """
+    Calculate the root mean squared error (RMSE) between two arrays.
+
+    Note:
+    - Nan values will be fully ignored by this function!
+
+    Parameters:
+    -----------
+    x : xr.Dataset or xr.DataArray
+        The predicted values.
+    y : xr.Dataset or xr.DataArray
+        The true values.
+    dim : str
+        Dimension for which the RMSE shall be computed.
+
+    Returns:
+    --------
+    xr.Dataset or xr.DataArray
+        The root mean squared error between `x` and `y`.
+
+    Examples:
+    ---------
+    >>> x = np.array([1, 2, 3])
+    >>> y = np.array([2, 4, 6])
+    >>> RMSE(x, y)
+    2
+    """
+    return np.sqrt(((x - y) ** 2).mean(dim=dim))
+
+
+def coverage(
+    x: np.ndarray, P: np.ndarray, y: np.ndarray, stds: float = 0.64
+) -> np.ndarray:
     """
     Calculate the coverage of a prediction interval.
 
@@ -80,7 +120,9 @@ def coverage(x, P, y, stds=0.64):
     return (y >= x - stds * np.sqrt(P)) & (y <= x + stds * np.sqrt(P))
 
 
-def coverage_prob(x, P, y, stds=0.64):
+def coverage_prob(
+    x: np.ndarray, P: np.ndarray, y: np.ndarray, stds: float = 0.64
+) -> np.ndarray:
     """
     Calculate the coverage probability of a prediction interval.
 
@@ -113,7 +155,51 @@ def coverage_prob(x, P, y, stds=0.64):
     return np.sum(res) / np.size(res)
 
 
-def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
+def xarray_coverage_prob(
+    x: xr.DataArray,
+    P: xr.DataArray,
+    y: xr.DataArray,
+    stds: float = 0.64,
+    dim: str = "time",
+) -> xr.DataArray:
+    """
+    Calculate the coverage probability of a prediction interval. Note that x
+    and y should contain the same dimensions and should be of same shape.
+
+    Parameters:
+    -----------
+    x : xr.DataArray
+        The predicted values.
+    P : xr.DataArray
+        The variance or uncertainty associated with the predicted values.
+    y : xr.DataArray
+        The true values.
+    stds : float, optional
+        The number of standard deviations to consider for the prediction interval.
+        Default is 0.64, corresponding to approximately 50% coverage.
+    dim : str
+        Dimension for which the coverage probability shall be computed.
+
+    Returns:
+    --------
+    xr.DataArray
+        The coverage probability of the prediction interval.
+
+    Examples:
+    ---------
+    >>> x = np.array([1, 2, 3])
+    >>> P = np.array([1, 2, 3])
+    >>> y = np.array([2, 5, 7])
+    >>> coverage_prob(x, P, y)
+    0.3333333333333333
+    """
+    res = coverage(x=x, P=P, y=y, stds=stds)
+    return res.sum(dim=dim) / np.size(res[dim])
+
+
+def gaussian_weights_2D(
+    x: np.ndarray, y: np.ndarray, axis: int = 0, alpha: float = 0.2
+) -> np.ndarray:
     """
     Creates a Gaussian weights for a 2D-array x centered at positions given by
     y. The weights will be computed along the specified axis.
@@ -136,6 +222,7 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
         gaussian weights
         dimension as x
     """
+    raise NotImplementedError("Function not fully implemented")
     try:
         assert np.array_equal(np.ndim(x), np.ndim(y))
     except Exception:
@@ -153,7 +240,7 @@ def gaussian_weights_2D(x, y, axis=0, alpha=0.2):
     return weights
 
 
-def broadcast_along_axis_as(x, y, axis):
+def broadcast_along_axis_as(x: np.ndarray, y: np.ndarray, axis: int):
     """
     Broadcasts 1D array x to an array of same shape as y, containing the given
     axis. The length of x need to be the same as the length of y along the
@@ -200,7 +287,13 @@ def broadcast_along_axis_as(x, y, axis):
     return res
 
 
-def gaussian_kernel_1D(x, center_idx, axis=0, sigma=100, same_output_shape=False):
+def gaussian_kernel_1D(
+    x: np.ndarray,
+    center_idx: int,
+    axis: int = 0,
+    sigma: float = 100,
+    same_output_shape: bool = False,
+) -> np.ndarray:
     """
     Creates a Gaussian weights for a N dimensional array x centered at index y
     along specified axis.
@@ -246,7 +339,7 @@ def gaussian_kernel_1D(x, center_idx, axis=0, sigma=100, same_output_shape=False
         return broadcast_along_axis_as(kernel, x, axis=axis)
 
 
-def ordered_like(a, b):
+def ordered_like(a: list, b: list) -> list:
     """
     Sorts the elements in list 'a' based on their presence in list 'b' while
     preserving the order.
@@ -268,7 +361,7 @@ def ordered_like(a, b):
     return sorted(a, key=lambda x: (x not in b, b.index(x) if x in b else False))
 
 
-def assert_ordered_subset(a, b):
+def assert_ordered_subset(a: list, b: list) -> list:
     """
     Asserts that list 'a' is a subset of list 'b' and that the elements in 'a'
     are ordered like in 'b'.
@@ -293,3 +386,58 @@ def assert_ordered_subset(a, b):
     """
     assert set(a).issubset(b), "a is not a subset of b"
     assert a == [x for x in b if x in a], "a is not ordered like of b"
+
+
+def kalman_single_forecast(
+    S: np.ndarray, C: np.ndarray, M: np.ndarray, Q: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Function to calculate the forecast of a system using the Kalman equation.
+
+    Parameters:
+        S (np.ndarray): State matrix of shape [T x N].
+        C (np.ndarray): Covariance matrix of shape [T x N x N].
+        M (np.ndarray): Model matrix of shape [N x N] (2D case) or [T x N x N] (3D case).
+        Q (np.ndarray): Model uncertainty matrix of shape [N x N] (2D case) or [T x N x N] (3D case).
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: A tuple containing the state forecast and covariance forecast.
+            - state_forecast (np.ndarray): State forecast of shape [T x N].
+            - covariance_forecast (np.ndarray): Covariance forecast of shape [T x N x N].
+
+    Notes:
+    - The function calculates the forecast of a system using the Kalman equations.
+    - It can handle 2D and 3D cases of the model matrix M and model uncertainty matrix Q.
+    - The state is updated using the Kalman equations: x(t+dt) = M x x(t), C(t+dt) = M x C(t) x M.T + Q.
+    - The function supports different shapes of input matrices based on the dimensionality of M and Q.
+    - For the 2D case, the input matrices have the following shapes:
+        - S: [T x N]       (State Matrix)
+        - C: [T x N x N]   (Covariance Matrix)
+        - M: [N x N]       (Model matrix)
+        - Q: [N x N]       (Model uncertainty matrix)
+        - Update of S and Q:
+            - S^u_{ij} = M_{jk} S_{ik}
+            - C^u_{ijk} = M_{jk} C_{ijk} M_{kj} + Q_{jk}
+    - For the 3D case, the input matrices have the following shapes:
+        - S: [T x N]       (State Matrix)
+        - C: [T x N x N]   (Covariance Matrix)
+        - M: [T x N x N]   (Model matrix)
+        - Q: [T x N x N]   (Model uncertainty matrix)
+            - S^u_{ij} = M_{ijk} S_{ik}
+            - C^u_{ijk} = M_{ijk} C_{ijk} M_{ikj} + Q_{ijk}
+    - The state and covariance are updated based on the provided model matrices and uncertainty matrices.
+
+    Raises:
+        NotImplementedError: If the provided dimensionality of M and Q is not supported.
+    """
+    if M.ndim == Q.ndim == 2:
+        state_forecast = np.einsum("jk,ik->ij", M, S)
+        covariance_forecast = np.einsum("jk,ijk,kj->ijk", M, C, M) + Q
+    elif M.ndim == Q.ndim == 3:
+        state_forecast = np.einsum("ijk,ik->ij", M, S)
+        covariance_forecast = np.einsum("ijk,ijk,ikj->ijk", M, C, M) + Q
+    else:
+        raise NotImplementedError(
+            "For the provided case ndim of M : {np.ndim(M)}, Q : {np.ndim(Q)}, no Implementation is yet done."
+        )
+    return state_forecast, covariance_forecast
