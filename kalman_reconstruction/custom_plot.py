@@ -1,11 +1,12 @@
 from colorsys import hls_to_rgb, rgb_to_hls
 from typing import Tuple, Union
+from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from matplotlib.collections import PathCollection
-from matplotlib.colors import cnames, to_rgb
+from matplotlib.colors import cnames, to_rgb, to_hex
 from matplotlib.legend_handler import HandlerLine2D, HandlerPathCollection
 
 
@@ -194,7 +195,8 @@ def adjust_lightness(color: str, amount: float = 0.5) -> str:
         except:
             c = color
         c = rgb_to_hls(*to_rgb(c))
-        return hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
+        c = hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
+        return to_hex(c)
     except ValueError:
         return color  # Return the original color if conversion fails
 
@@ -265,6 +267,15 @@ def ncols_nrows_from_N(N):
         >>> ncols_nrows_from_N(1)
         {'ncols': 1, 'nrows': 1}
     """
-    rows = int(np.ceil(np.sqrt(N)))
-    cols = int(np.ceil(N / rows))
+    if not isinstance(N, (int, float)) :
+        try : 
+            N = int(N)
+            warn(f"N should be and type int but is {type(N)}\nConverted to int. N : {N}")
+        except Exception:
+            raise ValueError(f"N should be and type int but is {type(N)}\nConvertion to int not possible")
+    if N <= 0:
+            raise ValueError(f"N need to be greate than 1 but is {N}")
+    
+    cols = int(np.ceil(np.sqrt(N)))
+    rows = int(np.ceil(N / cols))
     return dict(ncols=cols, nrows=rows)
