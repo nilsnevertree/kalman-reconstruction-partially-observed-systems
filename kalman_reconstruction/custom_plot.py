@@ -1,7 +1,12 @@
+from colorsys import hls_to_rgb, rgb_to_hls
 from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+from matplotlib.collections import PathCollection
+from matplotlib.colors import cnames, to_rgb
+from matplotlib.legend_handler import HandlerLine2D, HandlerPathCollection
 
 
 def set_custom_rcParams():
@@ -27,17 +32,18 @@ def set_custom_rcParams():
     plt.rcParams["figure.figsize"] = (10, 8)
 
     # Set font sizes
+    SMALL_SIZE = 10
     MEDIUM_SIZE = 12
     BIGGER_SIZE = 15
     HUGHER_SIZE = 18
     plt.rc("font", size=MEDIUM_SIZE)  # Default text sizes
     plt.rc("figure", titlesize=HUGHER_SIZE)  # Axes title size
     plt.rc("figure", labelsize=BIGGER_SIZE)  # X and Y labels size
-    plt.rc("axes", titlesize=BIGGER_SIZE)  # Axes title size
-    plt.rc("axes", labelsize=MEDIUM_SIZE)  # X and Y labels size
-    plt.rc("xtick", labelsize=MEDIUM_SIZE)  # X tick labels size
-    plt.rc("ytick", labelsize=MEDIUM_SIZE)  # Y tick labels size
-    plt.rc("legend", fontsize=MEDIUM_SIZE)  # Legend fontsize
+    plt.rc("axes", titlesize=MEDIUM_SIZE)  # Axes title size
+    plt.rc("axes", labelsize=SMALL_SIZE)  # X and Y labels size
+    plt.rc("xtick", labelsize=SMALL_SIZE)  # X tick labels size
+    plt.rc("ytick", labelsize=SMALL_SIZE)  # Y tick labels size
+    plt.rc("legend", fontsize=SMALL_SIZE)  # Legend fontsize
     plt.rc("figure", titlesize=BIGGER_SIZE)  # Figure title size
 
     # Set axis spines visibility
@@ -149,3 +155,116 @@ def plot_state_with_probability(
     )
     if output:
         return p, f
+
+
+def adjust_lightness(color: str, amount: float = 0.5) -> str:
+    """
+    Adjusts the lightness of a color by the specified amount.
+
+    This function takes a color name or a hexadecimal color code as input and adjusts its lightness
+    by the specified amount. The color name can be one of the predefined color names from the Matplotlib
+    `cnames` dictionary or a custom color name. If the input color is a hexadecimal color code, it will
+    be converted to the corresponding RGB values before adjusting the lightness.
+
+    The lightness adjustment is performed by converting the color to the HLS (Hue, Lightness, Saturation)
+    color space, modifying the lightness component by the specified amount, and then converting it back
+    to the RGB color space.
+
+    Parameters:
+        color (str): The color name or hexadecimal color code to adjust the lightness of.
+        amount (float, optional): The amount by which to adjust the lightness.
+            Positive values increase the lightness, while negative values decrease it.
+            Default is 0.5.
+
+    Returns:
+        str: The adjusted color as a hexadecimal color code.
+
+    Example usage:
+    >>> color = "red"
+    >>> adjusted_color = adjust_lightness(color, 0.5)
+    >>> print(f"Adjusted color: {adjusted_color}")
+
+    References:
+        - Function created by Ian Hincks, available at:
+          https://stackoverflow.com/a/49601444/16372843
+    """
+    try:
+        try:
+            c = cnames[color]
+        except:
+            c = color
+        c = rgb_to_hls(*to_rgb(c))
+        return hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
+    except ValueError:
+        return color  # Return the original color if conversion fails
+
+
+def __set_handler_alpha_to_1__(handle, orig):
+    """
+    Set the alpha (transparency) of the handler to 1.
+
+    This internal function is used to set the alpha value of a legend handler to 1.
+    It is used as an update function in `handler_map_alpha` to modify the legend handler's alpha value.
+
+    Parameters:
+        handle: The legend handler object to update.
+        orig: The original legend handler object.
+
+    Returns:
+        None
+
+    Reference:
+        https://stackoverflow.com/a/59629242/16372843
+    """
+    handle.update_from(orig)
+    handle.set_alpha(1)
+
+
+def handler_map_alpha():
+    """
+    Create a mapping of legend handler types to update functions.
+
+    This function returns a dictionary that maps specific legend handler types to their corresponding
+    update functions. The update functions are used to modify the legend handler's properties,
+    such as the alpha (transparency) value.
+
+    Returns:
+        dict: A dictionary mapping legend handler types to their update functions.
+
+    Example usage:
+    >>> handler_map = handler_map_alpha()
+    >>> print(handler_map)
+    """
+    return {
+        PathCollection: HandlerPathCollection(update_func=__set_handler_alpha_to_1__),
+        plt.Line2D: HandlerLine2D(update_func=__set_handler_alpha_to_1__),
+    }
+
+
+def ncols_nrows_from_N(N):
+    """
+    Calculate the number of columns and rows for a grid based on the total
+    number of elements.
+
+    Given the total number of elements `N`, this function calculates the optimal number of
+    columns and rows for a grid layout that can accommodate all the elements.
+
+    Parameters:
+        N (int): The total number of elements.
+
+    Returns:
+        dict: A dictionary containing the number of columns (`ncols`) and rows (`nrows`) for the grid.
+
+    Examples:
+        >>> ncols_nrows_from_N(12)
+        {'ncols': 4, 'nrows': 3}
+
+        >>> ncols_nrows_from_N(8)
+        {'ncols': 3, 'nrows': 3}
+
+        >>> ncols_nrows_from_N(1)
+        {'ncols': 1, 'nrows': 1}
+    """
+    rows = int(np.ceil(np.sqrt(N)))
+    cols = int(np.ceil(N / rows))
+    return dict(ncols=cols, nrows=rows)
