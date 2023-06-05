@@ -295,8 +295,8 @@ def gaussian_kernel_1D(
     same_output_shape: bool = False,
 ) -> np.ndarray:
     """
-    Creates a Gaussian weights for a N dimensional array x centered at index y
-    along specified axis.
+    Creates a Gaussian weights for a N dimensional array x centered at index
+    center_idx along specified axis.
 
     The equation used is:
     $e^{-{\frac {1}{2}}\left({\frac {x-\center_idx}{\sigma }}\right)^{2}}}$
