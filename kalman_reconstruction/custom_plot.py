@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from matplotlib.collections import PathCollection
-from matplotlib.colors import cnames, to_rgb, to_hex
+from matplotlib.colors import cnames, to_hex, to_rgb
 from matplotlib.legend_handler import HandlerLine2D, HandlerPathCollection
 
 
@@ -267,15 +267,19 @@ def ncols_nrows_from_N(N):
         >>> ncols_nrows_from_N(1)
         {'ncols': 1, 'nrows': 1}
     """
-    if not isinstance(N, (int, float)) :
-        try : 
+    if not isinstance(N, (int, float)):
+        try:
             N = int(N)
-            warn(f"N should be and type int but is {type(N)}\nConverted to int. N : {N}")
+            warn(
+                f"N should be and type int but is {type(N)}\nConverted to int. N : {N}"
+            )
         except Exception:
-            raise ValueError(f"N should be and type int but is {type(N)}\nConvertion to int not possible")
+            raise ValueError(
+                f"N should be and type int but is {type(N)}\nConvertion to int not possible"
+            )
     if N <= 0:
-            raise ValueError(f"N need to be greate than 1 but is {N}")
-    
+        raise ValueError(f"N need to be greate than 1 but is {N}")
+
     cols = int(np.ceil(np.sqrt(N)))
     rows = int(np.ceil(N / cols))
     return dict(ncols=cols, nrows=rows)
