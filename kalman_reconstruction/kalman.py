@@ -271,6 +271,14 @@ def Kalman_SEM(x, y, H, R, nb_iter_SEM):  # , x_t, t):
     Q : array shape (T, p, p)
         Estimation of the true process noise covariance matrix Q after the final itteration of the algorithm.
     """
+    # verify that non nans in the data
+    x_nans = np.sum(np.isnan(x)) == 0
+    y_nans = np.sum(np.isnan(y)) == 0
+    if not x_nans or not y_nans:
+        raise NotImplementedError(
+            "It seems that the provided 'x' or 'y' arrays contain nan values.\nThis is not supported yet!"
+        )
+
     # fix the seed
     np.random.seed(11)
 
