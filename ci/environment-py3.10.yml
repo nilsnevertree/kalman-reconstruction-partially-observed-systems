@@ -11,6 +11,7 @@ dependencies:
   - xarray
   - tqdm
   - scikit-learn
+  - matplotlib
   ##############
   - pytest
   - pip:
