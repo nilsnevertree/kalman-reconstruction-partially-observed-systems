@@ -1,3 +1,5 @@
+import traceback
+
 from typing import Callable, Dict, Iterable, Tuple, Union
 from warnings import warn
 
@@ -1737,8 +1739,12 @@ def run_function_on_multiple_subdatasets(
                 )
                 result.append(res)
 
-        except Exception as e:
-            warn(f"ValueError: Error occurred during processing: {type(e)}")
+        except Exception as ex:
+            # using traceback https://stackoverflow.com/a/47659065/16372843
+            traceback_message = traceback.format_exc()
+            message = f"{type(ex).__name__} occurred during processing. Traceback is:\n{traceback_message}"
+            # TODO : use warning instead of print
+            print(message)
 
     return xr.merge(result)
 
