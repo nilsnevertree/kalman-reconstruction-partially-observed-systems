@@ -5,9 +5,15 @@ from warnings import warn
 import matplotlib.pyplot as plt
 import numpy as np
 
+from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib.colors import cnames, to_hex, to_rgb
-from matplotlib.legend_handler import HandlerLine2D, HandlerPathCollection
+from matplotlib.legend_handler import (
+    HandlerLine2D,
+    HandlerPathCollection,
+    HandlerPolyCollection,
+)
+from matplotlib.patches import Polygon
 
 
 def set_custom_rcParams():
@@ -30,7 +36,7 @@ def set_custom_rcParams():
     """
 
     # Set default figure size
-    plt.rcParams["figure.figsize"] = (10, 8)
+    plt.rcParams["figure.figsize"] = (16 / 1.5, 9 / 1.5)
 
     # Set font sizes
     SMALL_SIZE = 10
@@ -158,7 +164,7 @@ def plot_state_with_probability(
         return p, f
 
 
-def adjust_lightness(color: str, amount: float = 0.5) -> str:
+def adjust_lightness(color: str, amount: float = 0.75) -> str:
     """
     Adjusts the lightness of a color by the specified amount.
 
@@ -175,7 +181,7 @@ def adjust_lightness(color: str, amount: float = 0.5) -> str:
         color (str): The color name or hexadecimal color code to adjust the lightness of.
         amount (float, optional): The amount by which to adjust the lightness.
             Positive values increase the lightness, while negative values decrease it.
-            Default is 0.5.
+            Default is 0.75.
 
     Returns:
         str: The adjusted color as a hexadecimal color code.
@@ -234,12 +240,13 @@ def handler_map_alpha():
         dict: A dictionary mapping legend handler types to their update functions.
 
     Example usage:
-    >>> handler_map = handler_map_alpha()
+    >>> ax.legend(handhandler_map_alpha()
     >>> print(handler_map)
     """
     return {
         PathCollection: HandlerPathCollection(update_func=__set_handler_alpha_to_1__),
         plt.Line2D: HandlerLine2D(update_func=__set_handler_alpha_to_1__),
+        Polygon: HandlerPolyCollection(update_func=__set_handler_alpha_to_1__),
     }
 
 
@@ -283,3 +290,41 @@ def ncols_nrows_from_N(N):
     cols = int(np.ceil(np.sqrt(N)))
     rows = int(np.ceil(N / cols))
     return dict(ncols=cols, nrows=rows)
+
+
+def symmetrize_axis(axes: Axes, axis: Union[int, str]) -> None:
+    """
+    Symmetrize the given axis of the matplotlib Axes object.
+
+    This function adjusts the limits of the specified axis of the matplotlib Axes object
+    to make it symmetrical by setting the minimum and maximum values to their absolute maximum.
+
+    Parameters:
+        axes (Axes): The matplotlib Axes object.
+        axis (Union[int, str]): The axis to symmetrize. It can be specified either by index (0 for x-axis, 1 for y-axis)
+            or by string identifier ("x" for x-axis, "y" for y-axis).
+
+    Returns:
+        None
+
+    Examples:
+        # Example 1: Symmetrize the x-axis
+        >>> import matplotlib.pyplot as plt
+        >>> fig, ax = plt.subplots()
+        >>> ax.plot(x, y)
+        >>> symmetrize_axis(ax, axis=0)
+        >>> plt.show()
+
+        # Example 2: Symmetrize the y-axis
+        >>> import matplotlib.pyplot as plt
+        >>> fig, ax = plt.subplots()
+        >>> ax.plot(x, y)
+        >>> symmetrize_axis(ax, axis="y")
+        >>> plt.show()
+    """
+    if axis in [0, "x"]:
+        maxi = np.abs(axes.get_xlim()).max()
+        axes.set_xlim(xmin=-maxi, xmax=maxi)
+    elif axis in [1, "y"]:
+        maxi = np.abs(axes.get_ylim()).max()
+        axes.set_ylim(ymin=-maxi, ymax=maxi)
