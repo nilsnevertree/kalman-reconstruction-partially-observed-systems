@@ -8,7 +8,7 @@ setup(
         "tag_regex": r"^(?P<prefix>v)?(?P<version>[^\+]+)(?P<suffix>.*)?$",
         "local_scheme": "node-and-date",
     },
-    description="Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an itterative procedure.",
+    description="Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an iterative procedure.",
     author="IMT-Atlantique-MEE",
     license="",
 )

@@ -19,7 +19,7 @@ from matplotlib.patches import Polygon
 def set_custom_rcParams():
     """
     Set the default configuration parameters for matplotlib. The colorblind-
-    save colors were choosen with the help of
+    save colors were chosen with the help of
     https://davidmathlogic.com/colorblind.
 
     Returns:
@@ -285,7 +285,7 @@ def ncols_nrows_from_N(N):
                 f"N should be and type int but is {type(N)}\nConvertion to int not possible"
             )
     if N <= 0:
-        raise ValueError(f"N need to be greate than 1 but is {N}")
+        raise ValueError(f"N need to be greater than 1 but is {N}")
 
     cols = int(np.ceil(np.sqrt(N)))
     rows = int(np.ceil(N / cols))

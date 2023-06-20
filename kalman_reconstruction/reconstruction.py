@@ -12,7 +12,7 @@ def calculate_x1_from_z1(x2, x3, z1, z2, a, b, sigma, beta, rho, **kwargs):
         - d/dt(x2) = ...
         - d/dt(x3) = ...
     - The solution is of the form coef_1 * x1 + coef_0 = 0.
-        where the coefficent can depend on all input parameters.
+        where the coefficient can depend on all input parameters.
 
     Parameters
     ----------
@@ -59,7 +59,7 @@ def calculate_x1_from_z2(x2, x3, z1, z2, a, b, sigma, beta, rho, **kwargs):
         - d/dt(x2) = ...
         - d/dt(x3) = ...
     - The solution is of the form coef_2 * x1**2 + coef_1 * x1 + coef_0 = 0.
-        where the coefficent can depend on all input parameters and the non linear combinations of them up to O(2).
+        where the coefficient can depend on all input parameters and the non linear combinations of them up to O(2).
     - Therefore the two solutions are returned
     Parameters
     ----------

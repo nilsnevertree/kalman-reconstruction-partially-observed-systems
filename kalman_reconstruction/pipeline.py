@@ -237,7 +237,7 @@ def xarray_Kalman_filter(
     - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
     # raise NotImplementedError("Function full deployed yet!")
-    # function to craete new names from a list of strings
+    # function to create new names from a list of strings
     join_names = lambda l: "".join(l)
 
     n = len(state_variables)
@@ -265,7 +265,7 @@ def xarray_Kalman_filter(
         p,
     ), f"Mismatch in dimensions of R : {np.shape(R)} but should be {(p,p)}"
 
-    # create a list of numpy array to be used for the Kalman itteration
+    # create a list of numpy array to be used for the Kalman iteration
     observation_list = []
     state_list = []
     for var in observation_variables:
@@ -425,7 +425,7 @@ def xarray_Kalman_filter_time_dependent(
     - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
     # raise NotImplementedError("Function full deployed yet!")
-    # function to craete new names from a list of strings
+    # function to create new names from a list of strings
     join_names = lambda l: "".join(l)
 
     n = len(state_variables)
@@ -456,7 +456,7 @@ def xarray_Kalman_filter_time_dependent(
         p,
     ), f"Mismatch in dimensions of R : {np.shape(R)} but should be {(p,p)}"
 
-    # create a list of numpy array to be used for the Kalman itteration
+    # create a list of numpy array to be used for the Kalman iteration
     observation_list = []
     state_list = []
     for var in observation_variables:
@@ -582,8 +582,8 @@ def xarray_Kalman_smoother(
         Dimension along which the estimation state shall be selected.
         Default dimension is "time".
     estimation_idx : int
-        Index used for the inital estimation of the state from along 'dim'.
-        Defaul to 0.
+        Index used for the initial estimation of the state from along 'dim'.
+        Default to 0.
     suffix : str, optional
         Suffix to be appended to the variable names in the output dataset.
         Default is an empty string.
@@ -627,7 +627,7 @@ def xarray_Kalman_smoother(
     - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
     # raise NotImplementedError("Function full deployed yet!")
-    # function to craete new names from a list of strings
+    # function to create new names from a list of strings
     join_names = lambda l: "".join(l)
 
     n = len(state_variables)
@@ -655,7 +655,7 @@ def xarray_Kalman_smoother(
         p,
     ), f"Mismatch in dimensions of R : {np.shape(R)} but should be {(p,p)}"
 
-    # create a list of numpy array to be used for the Kalman itteration
+    # create a list of numpy array to be used for the Kalman iteration
     observation_list = []
     state_list = []
     for var in observation_variables:
@@ -790,8 +790,8 @@ def xarray_Kalman_smoother_time_dependent(
         Dimension along which the estimation state shall be selected.
         Default dimension is "time".
     estimation_idx : int
-        Index used for the inital estimation of the state from along 'dim'.
-        Defaul to 0.
+        Index used for the initial estimation of the state from along 'dim'.
+        Default to 0.
     suffix : str, optional
         Suffix to be appended to the variable names in the output dataset.
         Default is an empty string.
@@ -835,7 +835,7 @@ def xarray_Kalman_smoother_time_dependent(
     - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
     # raise NotImplementedError("Function full deployed yet!")
-    # function to craete new names from a list of strings
+    # function to create new names from a list of strings
     join_names = lambda l: "".join(l)
 
     n = len(state_variables)
@@ -865,7 +865,7 @@ def xarray_Kalman_smoother_time_dependent(
         p,
     ), f"Mismatch in dimensions of R : {np.shape(R)} but should be {(p,p)}"
 
-    # create a list of numpy array to be used for the Kalman itteration
+    # create a list of numpy array to be used for the Kalman iteration
     observation_list = []
     state_list = []
     for var in observation_variables:
@@ -1037,7 +1037,7 @@ def xarray_Kalman_SEM(
     - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
-    # function to craete new names from a list of strings
+    # function to create new names from a list of strings
     join_names = lambda l: "".join(l)
 
     # make sure that the variables in observation_variables are in same order as in state_variables
@@ -1045,7 +1045,7 @@ def xarray_Kalman_SEM(
     # check that state_variables is a subset sorted like observation_variables
     assert_ordered_subset(observation_variables, state_variables)
 
-    # create a list of numpy array to be used for the Kalman itteration
+    # create a list of numpy array to be used for the Kalman iteration
     observation_list = []
     state_list = []
     for var in observation_variables:
@@ -1195,7 +1195,7 @@ def xarray_Kalman_SEM_time_dependent(
     - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
-    # function to craete new names from a list of strings
+    # function to create new names from a list of strings
     join_names = lambda l: "".join(l)
 
     # make sure that the variables in observation_variables are in same order as in state_variables
@@ -1203,7 +1203,7 @@ def xarray_Kalman_SEM_time_dependent(
     # check that state_variables is a subset sorted like observation_variables
     assert_ordered_subset(observation_variables, state_variables)
 
-    # create a list of numpy array to be used for the Kalman itteration
+    # create a list of numpy array to be used for the Kalman iteration
     observation_list = []
     state_list = []
     for var in observation_variables:
@@ -1300,7 +1300,7 @@ def expand_and_assign_coords(
     Parameters:
         ds1 (xr.Dataset): The dataset to expand dimensions.
         ds2 (xr.Dataset): The dataset containing coordinates to assign.
-        select_dict (dict): Dictonary of selection or index selection containing names and values of the coords and dims to expand.
+        select_dict (dict): Dictionary of selection or index selection containing names and values of the coords and dims to expand.
 
     Returns:
         xr.Dataset: The dataset with expanded dimensions and assigned coordinates.
@@ -1401,7 +1401,7 @@ def all_choords_as_dim(
     return ds
 
 
-# Functions to add one ore more varibales to a DataSet
+# Functions to add one or more variables to a DataSet
 
 
 def add_random_variable(
@@ -1673,7 +1673,7 @@ def multiple_runs_of_func(
     # Assign a new dimension to the dataset
     result = result.assign_coords({new_dimension: np.arange(number_of_runs)})
 
-    # for the first itteration use the result to create the new coordinates and varibles needed in the output DataSet
+    # for the first iteration use the result to create the new coordinates and variables needed in the output DataSet
     current_run = 0
     select_dict = {new_dimension: current_run}
     # Execute the function on the dataset
@@ -2020,7 +2020,7 @@ def forcast_from_kalman(
     result = result.transpose(forecast_dim, "state_name", "state_name_copy", ...)
     # For the whole forecast length, compute the new state at each forecast step and the corresponding other stuff
     for idx in range(0, forecast_length - 1):
-        # TODO: This for loop might also be negelectable wit the einstein convention by using it as another indice.
+        # TODO: This for loop might also be negelectable with the einstein convention by using it as another indice.
         state_forecast, covariance_forecast = kalman_single_forecast(
             S=result.states.isel({new_dimension: idx}).values,
             C=result.covariance.sel({new_dimension: idx}).values,
@@ -2096,7 +2096,7 @@ def to_standard_dataset(
             # state_name_copy = states_variables,
         )
     )
-    # initlize the dataarray fot the states using dimensions of the first state
+    # initlize the dataarray for the states using dimensions of the first state
     state = states_variables[0]
     # this should only use dimensional coordinates, thus only use these list of coords:
     coords = [result.state_name] + [ds[state].coords[var] for var in ds.dims]
@@ -2132,8 +2132,8 @@ def from_standard_dataset(
 
     Parameters:
         ds (xr.Dataset): The dataset in the standard format.
-        var_name (str): Variable name for which the seperate data variables shall be used.
-        state_name (str): dimension and coordinate name use in the standard dataset to specify the dimension of "states" varibles.
+        var_name (str): Variable name for which the separate data variables shall be used.
+        state_name (str): dimension and coordinate name use in the standard dataset to specify the dimension of "states" variables.
         suffix (str, optional) : Suffix to be appended to the variable names in the output dataset.
             - Default is an empty string.
         prefix (str, optional) : Prefix to be appended to the variable names in the output dataset.

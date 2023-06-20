@@ -242,7 +242,7 @@ texinfo_documents = [
         "kalman-reconstruction-partially-observered-systems Documentation",
         "IMT-Atlantique-MEE",
         "kalman-reconstruction-partially-observered-systems",
-        "Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an itterative procedure.",
+        "Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an iterative procedure.",
         "Miscellaneous",
     ),
 ]
