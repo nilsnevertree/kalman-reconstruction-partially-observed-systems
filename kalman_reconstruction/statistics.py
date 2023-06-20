@@ -1,8 +1,11 @@
+import warnings
+
 from typing import Tuple, Union
 
 import numpy as np
-import scipy as sp
 import xarray as xr
+
+from scipy import fftpack
 
 
 def my_mean(x: np.ndarray, axis: None = None, **kwargs) -> np.ndarray:
@@ -449,17 +452,24 @@ import numpy as np
 import xarray as xr
 
 
-def __normalize_minmax__(self):
+def __normalize_minmax__(
+    self: Union[xr.DataArray, xr.Dataset], dim: Union[None, str] = None
+) -> Union[xr.DataArray, xr.Dataset]:
     """
     Normalize the array using min-max normalization.
 
     Returns:
         np.ndarray: Normalized array using min-max normalization.
     """
-    return (self - self.min()) / (self.max() - self.min())
+    if dim is None:
+        return (self - self.min()) / (self.max() - self.min())
+    else:
+        return (self - self.min(dim=dim)) / (self.max(dim=dim) - self.min(dim=dim))
 
 
-def __normalize_mean__(self, ddof=0):
+def __normalize_mean__(
+    self: Union[xr.DataArray, xr.Dataset], ddof: int = 0, dim: Union[None, str] = None
+) -> Union[xr.DataArray, xr.Dataset]:
     """
     Normalize the array using mean normalization.
 
@@ -469,22 +479,30 @@ def __normalize_mean__(self, ddof=0):
     Returns:
         np.ndarray: Normalized array using mean normalization.
     """
-    return (self - self.mean()) / self.std(ddof=ddof)
+    if dim is None:
+        return (self - self.mean()) / self.std(ddof=ddof)
+    else:
+        return (self - self.mean(dim=dim)) / self.std(ddof=ddof, dim=dim)
 
 
-def __normalize_oneone__(self):
+def __normalize_oneone__(
+    self: Union[xr.DataArray, xr.Dataset], dim: Union[None, str] = None
+) -> Union[xr.DataArray, xr.Dataset]:
     """
     Normalize the array to the range [-1, 1].
 
     Returns:
         np.ndarray: Normalized array to the range [-1, 1].
     """
-    return __normalize_minmax__(self) * 2 - 1
+    return __normalize_minmax__(self=self, dim=dim) * 2 - 1
 
 
 def normalize(
-    x: Union[xr.Dataset, xr.DataArray, np.ndarray], method: str = "oneone", ddof=0
-):
+    x: Union[xr.Dataset, xr.DataArray, np.ndarray],
+    method: str = "oneone",
+    ddof: int = 0,
+    dim: Union[None, str] = None,
+) -> Union[xr.Dataset, xr.DataArray, np.ndarray]:
     """
     Normalize the input array using the specified method.
 
@@ -519,22 +537,22 @@ def normalize(
     >>> print(f"Normalized dataset:\n{normalized_ds}")
     """
     if method in ["MinMax", "minmax", "01", "0-1"]:
-        return __normalize_minmax__(x)
+        return __normalize_minmax__(x, dim=dim)
     elif method in ["Mean", "mean", "norm"]:
-        return __normalize_mean__(x)
+        return __normalize_mean__(x, ddof=ddof, dim=dim)
     elif method in ["OneOne", "oneone", "11", "1-1"]:
-        return __normalize_oneone__(x)
+        return __normalize_oneone__(x, dim=dim)
     else:
         assert False, f"Invalid normalization method: {method}"
 
 
-def autocorr(ds: xr.DataArray, lag: int = 1, dim: str = "time"):
+def autocorr(ds: xr.DataArray, lag: int = 0, dim: str = "time"):
     """
     Compute the lag-N autocorrelation using Pearson correlation coefficient.
 
     Parameters:
         ds (xr.DataArray): The object for which the autocorrelation shall be computed.
-        lag (int, optional): Number of lags to apply before performing autocorrelation. Default is 1.
+        lag (int, optional): Number of lags to apply before performing autocorrelation. Default is 0.
         dim (str, optional): Dimensino along which the autocorrelation shall be performed. Default is "time".
 
     Returns:
@@ -549,7 +567,8 @@ def autocorr(ds: xr.DataArray, lag: int = 1, dim: str = "time"):
             "longitude": [-120, -110, -100],
         },
     )
-    >>> autocorr_value = autocorr(normalized_ds["temperature"], lag=2, dim="time")
+    >>> # compute 30 day lagged auto-correlation
+    >>> autocorr_value = autocorr(ds["temperature"], lag=30, dim="time")
     >>> print(f"Autocorrelation value: {autocorr_value}")
     """
     if isinstance(ds, xr.DataArray):
