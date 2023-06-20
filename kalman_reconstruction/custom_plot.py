@@ -290,3 +290,41 @@ def ncols_nrows_from_N(N):
     cols = int(np.ceil(np.sqrt(N)))
     rows = int(np.ceil(N / cols))
     return dict(ncols=cols, nrows=rows)
+
+
+def symmetrize_axis(axes: Axes, axis: Union[int, str]) -> None:
+    """
+    Symmetrize the given axis of the matplotlib Axes object.
+
+    This function adjusts the limits of the specified axis of the matplotlib Axes object
+    to make it symmetrical by setting the minimum and maximum values to their absolute maximum.
+
+    Parameters:
+        axes (Axes): The matplotlib Axes object.
+        axis (Union[int, str]): The axis to symmetrize. It can be specified either by index (0 for x-axis, 1 for y-axis)
+            or by string identifier ("x" for x-axis, "y" for y-axis).
+
+    Returns:
+        None
+
+    Examples:
+        # Example 1: Symmetrize the x-axis
+        >>> import matplotlib.pyplot as plt
+        >>> fig, ax = plt.subplots()
+        >>> ax.plot(x, y)
+        >>> symmetrize_axis(ax, axis=0)
+        >>> plt.show()
+
+        # Example 2: Symmetrize the y-axis
+        >>> import matplotlib.pyplot as plt
+        >>> fig, ax = plt.subplots()
+        >>> ax.plot(x, y)
+        >>> symmetrize_axis(ax, axis="y")
+        >>> plt.show()
+    """
+    if axis in [0, "x"]:
+        maxi = np.abs(axes.get_xlim()).max()
+        axes.set_xlim(xmin=-maxi, xmax=maxi)
+    elif axis in [1, "y"]:
+        maxi = np.abs(axes.get_ylim()).max()
+        axes.set_ylim(ymin=-maxi, ymax=maxi)
