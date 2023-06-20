@@ -1360,6 +1360,47 @@ def expand_and_assign_coords(
     return ds1_expanded
 
 
+def all_choords_as_dim(
+    ds: Union[xr.Dataset, xr.DataArray]
+) -> Union[xr.Dataset, xr.DataArray]:
+    """
+    Expand all coordinates in the xarray Dataset or DataArray as new
+    dimensions.
+
+    This function expands each coordinate in the xarray Dataset or DataArray as a new dimension.
+    If a coordinate cannot be expanded (e.g., it already exists as a dimension), it is skipped.
+
+    Parameters:
+        ds (Union[xr.Dataset, xr.DataArray]): The input xarray Dataset or DataArray.
+
+    Returns:
+        Union[xr.Dataset, xr.DataArray]: The xarray object with all coordinates expanded as dimensions.
+
+    Examples:
+        # Example 1: Expand coordinates in a Dataset
+        >>> import xarray as xr
+        >>> data = [[1, 2], [3, 4]]
+        >>> coords = {'time': [0, 1], 'latitude': [10, 20], 'longitude': [30, 40]}
+        >>> ds = xr.Dataset({'data': (['time', 'latitude'], data)}, coords=coords)
+        >>> expanded_ds = all_choords_as_dim(ds)
+        >>> print(expanded_ds)
+
+        # Example 2: Expand coordinates in a DataArray
+        >>> import xarray as xr
+        >>> data = [1, 2, 3, 4]
+        >>> coords = {'latitude': [10, 20], 'longitude': [30, 40]}
+        >>> da = xr.DataArray(data, coords=coords, dims=['location'])
+        >>> expanded_da = all_choords_as_dim(da)
+        >>> print(expanded_da)
+    """
+    for dim in ds.coords:
+        try:
+            ds = ds.expand_dims(dim)
+        except:
+            pass
+    return ds
+
+
 # Functions to add one ore more varibales to a DataSet
 
 
