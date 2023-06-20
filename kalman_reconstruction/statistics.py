@@ -575,3 +575,128 @@ def autocorr(ds: xr.DataArray, lag: int = 0, dim: str = "time"):
         return xr.corr(ds, ds.shift({f"{dim}": lag}))
     else:
         raise NotImplementedError(f"Not implemented for type: {type(ds)}.")
+
+
+def crosscorr(ds1: xr.DataArray, ds2: xr.DataArray, lag: int = 0, dim: str = "time"):
+    """
+    Compute the lag-N cross-correlation using Pearson correlation coefficient of ds1 on ds2.
+    ds2 will be shihfted by ``lag`` timesteps.
+
+    Parameters:
+        ds1 (xr.DataArray): First array for the cross-correlation.
+        ds2 (xr.DataArray): Second array for the cross-correlation. This array will be shifted.
+        lag (int, optional): Number of lags to apply before performing autocorrelation. Default is 0.
+        dim (str, optional): Dimensino along which the autocorrelation shall be performed. Default is "time".
+
+    Returns:
+        xr.DataArray: Containing the result of the cross-correlation.
+
+    Example:
+    >>> ds1 = xr.Dataset(
+        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
+        coords={
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> ds2 = xr.Dataset(
+        {"precipitation": (("time", "latitude", "longitude"), precipitation_data)},
+        coords={
+            "time": pd.date_range("2022-01-01", periods=365),
+            "latitude": [30, 40, 50],
+            "longitude": [-120, -110, -100],
+        },
+    )
+    >>> # compute 30 day lagged cross correlation
+    >>> crosscorr_value = crosscorr(
+            ds1 = ds1["temperature"],
+            ds2 = ds2["precipitation"],
+            lag=30,
+            dim="time",
+            )
+    >>> print(f"Cross-correlation value: {crosscorr_value}")
+    """
+    if isinstance(ds1, xr.DataArray) and isinstance(ds2, xr.DataArray):
+        return xr.corr(ds1, ds2.shift({f"{dim}": lag}), dim=dim)
+    else:
+        raise NotImplementedError(
+            f"Not implemented for type: {type(ds1)} and {type(ds2)}."
+        )
+
+
+def compute_fft_spectrum(
+    time: np.ndarray, signal: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
+    """
+    BETTER USE signal.welch( ''' from scipy import signal import
+    matplotlib.pyplot as plt.
+
+    fig, ax = plt.subplots(1,1)
+    f, Pxx_den = signal.welch(x = oscillatory_data.DOT.values, fs=365.25/dt, nperseg=len(oscillatory_data.DOT.values))
+    ax.loglog(f, Pxx_den, label = "DOT")
+
+    dt = 30                     # days
+    fs = 365.25/dt              # 1/years
+    welch_window_width = 300    # years
+    f, Pxx_den = signal.welch(
+        x = oscillatory_data.DOT.values,
+        fs=fs,
+        window="hann",
+        nperseg = int(welch_window_width*fs)
+    )
+
+    ax.loglog(f, Pxx_den, label = "DOT welch")
+    '''
+
+    Compute the Fast Fourier Transform (FFT) spectrum of the given signal.
+
+    Parameters:
+        time (array-like): The array representing the time domain values.
+        signal (array-like): The array representing the signal values corresponding to `time`.
+
+    Returns:
+        tuple: A tuple containing the following FFT spectrum components:
+            - frequencies (ndarray): The frequencies corresponding to the FFT spectrum.
+            - spectrum (complex ndarray): The FFT spectrum of the input signal.
+            - amplitude (ndarray): The absolute values of the FFT spectrum components (normalized).
+            - min_frequency (float): The minimum frequency represented by the FFT spectrum.
+            - max_frequency (float): The maximum frequency represented by the FFT spectrum.
+
+    Examples:
+        # Example 1: Generate and plot the FFT spectrum of a simple sine wave
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> time = np.linspace(0, 1, 1000)
+        >>> signal = np.sin(2 * np.pi * 10 * time) + np.sin(2 * np.pi * 20 * time)
+        >>> frequencies, spectrum, amplitude, min_freq, max_freq = compute_fft_spectrum(time, signal)
+        >>> plt.plot(frequencies, amplitude)
+        >>> plt.xlabel('Frequency')
+        >>> plt.ylabel('Amplitude')
+        >>> plt.show()
+
+        # Example 2: Analyze the spectrum of a sampled signal
+        >>> sampling_rate = 1000  # Sampling rate
+        >>> time = np.arange(0, 1, 1 / sampling_rate)
+        >>> signal = np.sin(2 * np.pi * 50 * time) + np.sin(2 * np.pi * 120 * time)
+        >>> frequencies, spectrum, amplitude, min_freq, max_freq = compute_fft_spectrum(time, signal)
+        >>> plt.plot(frequencies, amplitude)
+        >>> plt.xlabel('Frequency')
+        >>> plt.ylabel('Amplitude')
+        >>> plt.show()
+    """
+    message = " from scipy import signal\n#Use welch with a specified window width\nf, Pxx_den = signal.welch(x = data, fs=12, nperseg=window_length)"
+    warnings.warn(message, DeprecationWarning)
+    delta_t = time[1] - time[0]
+    signal = signal[~np.isnan(signal)]
+
+    num_samples = len(signal)
+    time_values = np.arange(0, num_samples, delta_t)
+
+    spectrum = fftpack.fft(signal)
+    frequencies = np.linspace(0.0, 1.0 / (2.0 * delta_t), num_samples // 2)
+    amplitude = 2.0 / num_samples * np.abs(spectrum[: num_samples // 2])
+    min_frequency = 1 / num_samples
+    max_frequency = 1 / (2 * delta_t)
+
+    return frequencies, spectrum, amplitude, min_frequency, max_frequency
