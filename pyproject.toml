@@ -37,3 +37,11 @@ target-version = ['py39', 'py310', 'py311']
 black = true
 in-place = true
 pre-summary-newline = true
+
+
+[tool.codespell]
+skip = "*.nc,*.ipynb,./notebooks/*,environment.yml,Makefile"
+quiet-level = 2
+builtin = "clear,rare,code"
+ignore-words-list = "jupyter,Jupyter"
+write-changes = true
