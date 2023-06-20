@@ -216,7 +216,7 @@ def gaussian_weights_2D(
         Array of dimension (n, ).
         y.ndim should be 2 or 1.
     alpha: float
-        Alpha of the gaus distribution.
+        Alpha of the gaussian distribution.
         Default to 0.2
 
     Returns
@@ -257,7 +257,7 @@ def broadcast_along_axis_as(x: np.ndarray, y: np.ndarray, axis: int):
     x: array
         Array of dimension 1 which should be broadcasted for a specific axis.
     axis: int
-        Axis along which the arrays allign.
+        Axis along which the arrays align.
 
     Returns
     -------
@@ -325,8 +325,8 @@ def gaussian_kernel_1D(
     -------
     array
         Array containing the weights of the kernel.
-        If output is 1D, along this axis.
-        If output in ND, along provided axis.
+        If output is 1-dimensional, along this axis.
+        If output in N-dimensional, along provided axis.
         See also 'same_output_shape'.
     """
 

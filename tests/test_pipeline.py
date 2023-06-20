@@ -301,7 +301,7 @@ def test_perfect_forcast():
             ],
         ]
     )
-    # all values that would be greated than 30 need to be nans
+    # all values that would be greater than 30 need to be nans
 
     should = xr.Dataset(
         {"states_model": (("time", "state_name", "horizon"), expected)},

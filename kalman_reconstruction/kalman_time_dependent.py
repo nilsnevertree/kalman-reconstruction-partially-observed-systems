@@ -245,7 +245,7 @@ def Kalman_SEM_time_dependent(
     R : array-like, shape (p, p)
         First estimation of the observation noise covariance matrix.
     nb_iter_SEM : int
-        Number of itterations that shall be performed for the alogithm.
+        Number of iterations that shall be performed for the alogithm.
     sigma : float
         Standard deviation as the sqrt(variance) of the Gaussian distribution to create the 1D kernel used for the local linear regression.
         Note that the sigma is unitless and is measurent in index-positions of the array.
@@ -258,21 +258,21 @@ def Kalman_SEM_time_dependent(
     -------
     x_s : array, shape (T, n)
         Smoothed updated state estimates after assimilating the observations.
-        This represents the state (x) of the system after the final itteration of the algorithm.
+        This represents the state (x) of the system after the final iteration of the algorithm.
     P_s : array, shape (T, n, n)
         Smoothed error covariance matrices of the state estimates after assimilating the observations.
-        This represents the error covariance matrices as a function of time after the final itteration of the algorithm.
+        This represents the error covariance matrices as a function of time after the final iteration of the algorithm.
     M : array, shape (T, n, n)
-        Estimation of the true time-varying state transition matrix M after the final itteration of the algorithm.
+        Estimation of the true time-varying state transition matrix M after the final iteration of the algorithm.
     tab_loglik : array, shape (nb_iter_SEM)
-        Sum of the log-likelihod over time dimension for each itteration of the algorithm.
+        Sum of the log-likelihod over time dimension for each iteration of the algorithm.
     x_out : array, shape (T, n)
         Simulated the new state based on a multivariate normal distribution which uses
         x_s as mean and P_s as Covariance matrix.
     x_f : array, shape (T, n)
-        Forecasted state estimates after assimilating the observations by the used Kalman Filter, after the final itteration of the algorithm.
+        Forecasted state estimates after assimilating the observations by the used Kalman Filter, after the final iteration of the algorithm.
     Q : array shape (T, p, p)
-        Estimation of the true time-varying process noise covariance matrix Q after the final itteration of the algorithm.
+        Estimation of the true time-varying process noise covariance matrix Q after the final iteration of the algorithm.
     """
     # verify that non nans in the data
     x_nans = np.sum(np.isnan(x)) == 0

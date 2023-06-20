@@ -51,7 +51,7 @@ def example_covariance_01():
     """
     Covariance matrix.
 
-    Note that the values in teh array are the standard deviations
+    Note that the values in the array are the standard deviations
     """
     data = np.array(
         [[2.0, 2.0, 2.0, 2.0], [np.nan, 1.0, np.nan, 3.0]],

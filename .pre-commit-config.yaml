@@ -38,6 +38,11 @@ repos:
             B950,
           ]
 
+  - repo: https://github.com/asottile/seed-isort-config
+    rev: v2.2.0
+    hooks:
+      - id: seed-isort-config
+
   - repo: https://github.com/pre-commit/mirrors-isort
     rev: v5.10.1
     hooks:
@@ -55,12 +60,7 @@ repos:
             --line-width=88,
           ]
 
-  - repo: https://github.com/asottile/seed-isort-config
-    rev: v2.2.0
-    hooks:
-      - id: seed-isort-config
-
-    # Use black to clean code in jupyter notebook cells
+    # Use black to clean code in python and jupyter notebook cells
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
@@ -68,6 +68,7 @@ repos:
         args: [--config=./pyproject.toml]
       - id: black-jupyter
         language_version: python3
+        args: [--config=./pyproject.toml]
 
     # Enforce that notebooks outputs are cleared
   - repo: https://github.com/kynan/nbstripout
@@ -92,6 +93,7 @@ repos:
     rev: v4.4.0
     hooks:
       - id: check-added-large-files
+        args: ['--maxkb=300']
 
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v0.770
@@ -100,9 +102,10 @@ repos:
   #       exclude: docs/source/conf.py
   #       args: [--ignore-missing-imports]
 
-  # - repo: https://github.com/codespell-project/codespell
-  #   rev: v1.16.0
-  #   hooks:
-  #     - id: codespell
-  #       args:
-  #         - --quiet-level=2
+  # check for code spelling
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.4
+    hooks:
+    - id: codespell
+      additional_dependencies: [tomli]
+      args: [--toml=./pyproject.toml]

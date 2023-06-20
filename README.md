@@ -1,13 +1,13 @@
 kalman-reconstruction-partially-observered-systems
 ==============================
 
-Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an itterative procedure.
+Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an iterative procedure.
 
 ## Project Organization
 ------------
     ├───.github
     │   └───workflows                           <- GitHub workflows
-    ├───ci                                      <- Enviroments for the GitHub workflows
+    ├───ci                                      <- Environments for the GitHub workflows
     ├───data                                    <- Data should go here
     ├───docs                                    <- Documentation
     ├───kalman_reconstruction                   <- The main library that is build
@@ -112,7 +112,7 @@ Data variables:
 ## Pre-commit
 In order to use linting, pre-commit is used in this repository.
 To lint your code, install [pre-commit](https://pre-commit.com/) and run ``pre-commit run --all-files`` before each commit.
-This takes care of formating all files using the configuration from [.pre-commit-config.yaml](.pre-commit-config.yaml).
+This takes care of formatting all files using the configuration from [.pre-commit-config.yaml](.pre-commit-config.yaml).
 
 Please note that the https://github.com/kynan/nbstripout is used to make sure that the output from notebooks is cleared.
 To disable it, comment out the part in [.pre-commit-config.yaml](.pre-commit-config.yaml?plain=1#L65)
