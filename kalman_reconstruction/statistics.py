@@ -302,7 +302,7 @@ def gaussian_kernel_1D(
     center_idx along specified axis.
 
     The equation used is:
-    $e^{-{\frac {1}{2}}\left({\frac {x-\center_idx}{\sigma }}\right)^{2}}}$
+    :math: `e^{-{\frac {1}{2}}\left({\frac {x-\center_idx}{\sigma }}\right)^{2}}}`
 
     Parameters
     ----------
