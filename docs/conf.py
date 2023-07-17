@@ -198,7 +198,7 @@ latex_documents = [
         "index",
         "kalman-reconstruction-partially-observered-systems.tex",
         "kalman-reconstruction-partially-observered-systems Documentation",
-        "IMT-Atlantique-MEE",
+        "Nils Niebaum",
         "manual",
     ),
 ]
@@ -233,7 +233,7 @@ man_pages = [
         "index",
         "kalman-reconstruction-partially-observered-systems",
         "kalman-reconstruction-partially-observered-systems Documentation",
-        ["IMT-Atlantique-MEE"],
+        ["Nils Niebaum"],
         1,
     )
 ]
@@ -252,7 +252,7 @@ texinfo_documents = [
         "index",
         "kalman-reconstruction-partially-observered-systems",
         "kalman-reconstruction-partially-observered-systems Documentation",
-        "IMT-Atlantique-MEE",
+        "Nils Niebaum",
         "kalman-reconstruction-partially-observered-systems",
         "Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an iterative procedure.",
         "Miscellaneous",
