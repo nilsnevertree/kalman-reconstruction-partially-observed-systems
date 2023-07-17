@@ -36,7 +36,7 @@ def set_custom_rcParams():
     """
 
     # Set default figure size
-    plt.rcParams["figure.figsize"] = (16 / 1.5, 9 / 1.5)
+    plt.rcParams["figure.figsize"] = (16 / 2, 9 / 2)
 
     # Set font sizes
     SMALL_SIZE = 10
@@ -44,13 +44,13 @@ def set_custom_rcParams():
     BIGGER_SIZE = 15
     HUGHER_SIZE = 18
     plt.rc("font", size=MEDIUM_SIZE)  # Default text sizes
-    plt.rc("figure", titlesize=HUGHER_SIZE)  # Axes title size
-    plt.rc("figure", labelsize=BIGGER_SIZE)  # X and Y labels size
-    plt.rc("axes", titlesize=MEDIUM_SIZE)  # Axes title size
-    plt.rc("axes", labelsize=SMALL_SIZE)  # X and Y labels size
+    plt.rc("figure", titlesize=BIGGER_SIZE)  # Axes title size
+    plt.rc("figure", labelsize=MEDIUM_SIZE)  # X and Y labels size
+    plt.rc("axes", titlesize=BIGGER_SIZE)  # Axes title size
+    plt.rc("axes", labelsize=MEDIUM_SIZE)  # X and Y labels size
     plt.rc("xtick", labelsize=SMALL_SIZE)  # X tick labels size
     plt.rc("ytick", labelsize=SMALL_SIZE)  # Y tick labels size
-    plt.rc("legend", fontsize=SMALL_SIZE)  # Legend fontsize
+    plt.rc("legend", fontsize=MEDIUM_SIZE)  # Legend fontsize
     plt.rc("figure", titlesize=BIGGER_SIZE)  # Figure title size
 
     # Set axis spines visibility
@@ -65,7 +65,16 @@ def set_custom_rcParams():
     )
 
     # Set legend location
-    plt.rc("legend", loc="upper right")
+    plt.rc(
+        "legend",
+        **dict(
+            loc="upper right",
+            frameon=True,
+            framealpha=0.5,
+            fancybox=False,
+            edgecolor="none",
+        ),
+    )
 
     # Use colorblind-safe colors
     colors = [
@@ -78,6 +87,7 @@ def set_custom_rcParams():
         "#A494F5",
     ]
     plt.rcParams["axes.prop_cycle"] = plt.cycler(color=colors)
+    return colors
 
 
 def plot_colors(colors):
@@ -240,7 +250,7 @@ def handler_map_alpha():
         dict: A dictionary mapping legend handler types to their update functions.
 
     Example usage:
-    >>> ax.legend(handhandler_map_alpha()
+    >>> ax.legend(handler_map = handhandler_map_alpha())
     >>> print(handler_map)
     """
     return {

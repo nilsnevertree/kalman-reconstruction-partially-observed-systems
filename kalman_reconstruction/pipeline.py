@@ -6,7 +6,12 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 
-from kalman_reconstruction.kalman import Kalman_filter, Kalman_SEM, Kalman_smoother
+from kalman_reconstruction.kalman import (
+    Kalman_filter,
+    Kalman_SEM,
+    Kalman_SEM_full_output,
+    Kalman_smoother,
+)
 from kalman_reconstruction.kalman_time_dependent import (
     Kalman_filter_time_dependent,
     Kalman_SEM_time_dependent,
@@ -1018,7 +1023,7 @@ def xarray_Kalman_SEM(
     - time: Coordinates corresponding to the time of the input dataset.
     - state_name: Coordinates corresponding to the state variables.
     - state_name_copy: Coordinates corresponding to the copy of the state variables.
-    - kalman_itteration: Coordinates representing the Kalman SEM iteration index.
+    - kalman_iteration: Coordinates representing the Kalman SEM iteration index.
 
     Output Variables:
     - states<suffix>: DataArray containing the estimated states over time.
@@ -1030,7 +1035,7 @@ def xarray_Kalman_SEM(
     - Q<suffix>: DataArray containing the observation noise covariance matrix Q.
         - Dimensions: state_name, state_name_copy
     - log_likelihod<suffix>: DataArray containing the log-likelihood values for each Kalman SEM iteration.
-        - Dimensions: kalman_itteration
+        - Dimensions: kalman_iteration
 
     Note:
     - The output variable names will be suffixed with the provided suffix parameter.
@@ -1083,7 +1088,7 @@ def xarray_Kalman_SEM(
             time=ds["time"],
             state_name=state_variables,
             state_name_copy=state_variables,
-            kalman_itteration=np.arange(nb_iter_SEM),
+            kalman_iteration=np.arange(nb_iter_SEM),
         )
     )
     # store x_s
@@ -1114,7 +1119,7 @@ def xarray_Kalman_SEM(
     new_var = join_names(["log_likelihod", suffix])
     result[new_var] = xr.DataArray(
         data=log_likelihod,
-        dims=["kalman_itteration"],
+        dims=["kalman_iteration"],
     )
 
     return result
@@ -1176,7 +1181,7 @@ def xarray_Kalman_SEM_time_dependent(
     - time: Coordinates corresponding to the time of the input dataset.
     - state_name: Coordinates corresponding to the state variables.
     - state_name_copy: Coordinates corresponding to the copy of the state variables.
-    - kalman_itteration: Coordinates representing the Kalman SEM iteration index.
+    - kalman_iteration: Coordinates representing the Kalman SEM iteration index.
 
     Output Variables:
     - states<suffix>: DataArray containing the estimated states over time.
@@ -1188,7 +1193,7 @@ def xarray_Kalman_SEM_time_dependent(
     - Q<suffix>: DataArray containing the observation noise covariance matrix Q.
         - Dimensions: state_name, state_name_copy
     - log_likelihod<suffix>: DataArray containing the log-likelihood values for each Kalman SEM iteration.
-        - Dimensions: kalman_itteration
+        - Dimensions: kalman_iteration
 
     Note:
     - The output variable names will be suffixed with the provided suffix parameter.
@@ -1247,7 +1252,7 @@ def xarray_Kalman_SEM_time_dependent(
             time=ds["time"],
             state_name=state_variables,
             state_name_copy=state_variables,
-            kalman_itteration=np.arange(nb_iter_SEM),
+            kalman_iteration=np.arange(nb_iter_SEM),
         )
     )
     # store x_s
@@ -1278,8 +1283,167 @@ def xarray_Kalman_SEM_time_dependent(
     new_var = join_names(["log_likelihod", suffix])
     result[new_var] = xr.DataArray(
         data=log_likelihod,
-        dims=["kalman_itteration"],
+        dims=["kalman_iteration"],
     )
+
+    return result
+
+
+def xarray_Kalman_SEM_full_output(
+    ds: xr.Dataset,
+    observation_variables: Iterable[str],
+    state_variables: Iterable[str],
+    nb_iter_SEM: int = 30,
+    variance_obs_comp: float = 0.0001,
+    suffix: str = "",
+) -> xr.Dataset:
+    """
+    Run the Kalman SEM algorithm on the input dataset and return the results in
+    an xarray Dataset.
+
+    This function applies the Kalman_SEM algorithm on the specified observations and state variables in the given xarray dataset.
+    It performs a specified number of iterations and computes the state estimates, covariance, transition matrix, and
+    process noise covariance matrix. The results are stored in a new xarray dataset.
+
+    Note:
+    - The state_varianbles can contain latent variables which are not found in the observation_variables
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Input dataset containing the state and state variables.
+    observation_variables : list len(p)
+        List of observed variables to be used in the Kalman SEM algorithm.
+    state_variables : list len(n)
+        List of state variables to be used in the Kalman SEM algorithm.
+    nb_iter_SEM : int, optional
+        Number of iterations for the Kalman SEM algorithm.
+        Default is 30.
+    variance_obs_comp : float, optional
+        Variance parameter for observation components in the Kalman SEM algorithm.
+        Default is 0.0001.
+    suffix : str, optional
+        Suffix to be appended to the variable names in the output dataset.
+        Default is an empty string.
+
+    Returns
+    -------
+    xarray.Dataset
+        New xarray dataset containing the results of the Kalman_SEM algorithm.
+        Dimensions are:
+
+    Output Dimensions:
+    - time: The time dimension of the input dataset.
+    - state_name: Dimension representing the state variables.
+    - state_name_copy: Dimension representing a copy of the state variables.
+
+    Output Coordinates:
+    - time: Coordinates corresponding to the time of the input dataset.
+    - state_name: Coordinates corresponding to the state variables.
+    - state_name_copy: Coordinates corresponding to the copy of the state variables.
+    - kalman_iteration: Coordinates representing the Kalman SEM iteration index.
+
+    Output Variables:
+    - states<suffix>: DataArray containing the estimated states over time.
+        - Dimensions: time, state_name
+    - covariance<suffix>: DataArray containing the covariance of the estimated states over time.
+        - Dimensions: time, state_name, state_name_copy
+    - M<suffix>: DataArray containing the transition matrix M.
+        - Dimensions: state_name, state_name_copy
+    - Q<suffix>: DataArray containing the observation noise covariance matrix Q.
+        - Dimensions: state_name, state_name_copy
+    - log_likelihod<suffix>: DataArray containing the log-likelihood values for each Kalman SEM iteration.
+        - Dimensions: kalman_iteration
+
+    Note:
+    - The output variable names will be suffixed with the provided suffix parameter.
+    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+    """
+
+    # function to create new names from a list of strings
+    join_names = lambda l: "".join(l)
+
+    # make sure that the variables in observation_variables are in same order as in state_variables
+    state_variables = ordered_like(state_variables, observation_variables)
+    # check that state_variables is a subset sorted like observation_variables
+    assert_ordered_subset(observation_variables, state_variables)
+
+    # create a list of numpy array to be used for the Kalman iteration
+    observation_list = []
+    state_list = []
+    for var in observation_variables:
+        observation_list.append(ds[var].values.flatten())
+    for var in state_variables:
+        state_list.append(ds[var].values.flatten())
+
+    states, observations = input_arrays(
+        state_list=state_list, observation_list=observation_list
+    )
+
+    H, R = input_matrices_H_R(
+        states=states, observations=observations, variance_obs_comp=variance_obs_comp
+    )
+    # ---------------
+    # run the Kalman_SEM algorithm
+    # ---------------
+    (
+        x_s,
+        P_s,
+        M,
+        log_likelihod,
+        x,
+        x_f,
+        Q,
+    ) = Kalman_SEM_full_output(
+        x=states, y=observations, H=H, R=R, nb_iter_SEM=nb_iter_SEM
+    )
+
+    # ---------------
+    # create result dataset in which to store the whole lists
+    # ---------------
+    result = xr.Dataset({})
+    # assign coordinates
+    result = result.assign_coords(
+        dict(
+            time=ds["time"],
+            state_name=state_variables,
+            state_name_copy=state_variables,
+            kalman_iteration=np.arange(nb_iter_SEM),
+        )
+    )
+    # store x_s
+    new_var = join_names(["states", suffix])
+    result[new_var] = xr.DataArray(
+        data=x_s,
+        dims=["kalman_iteration", "time", "state_name"],
+    )
+    # store P_s
+    new_var = join_names(["covariance", suffix])
+    result[new_var] = xr.DataArray(
+        data=P_s,
+        dims=["kalman_iteration", "time", "state_name", "state_name_copy"],
+    )
+    # store M
+    new_var = join_names(["M", suffix])
+    result[new_var] = xr.DataArray(
+        data=M,
+        dims=["kalman_iteration", "state_name", "state_name_copy"],
+    )
+    # store Q
+    new_var = join_names(["Q", suffix])
+    result[new_var] = xr.DataArray(
+        data=Q,
+        dims=["kalman_iteration", "state_name", "state_name_copy"],
+    )
+    # store the log_likelihod
+    new_var = join_names(["log_likelihod", suffix])
+    result[new_var] = xr.DataArray(
+        data=log_likelihod,
+        dims=["kalman_iteration"],
+    )
+
+    # shift the kalman_iteration to the end
+    # result = result.transpose(dims = ["time", "state_name", "state_name_copy", "kalman_iteration"])
 
     return result
 

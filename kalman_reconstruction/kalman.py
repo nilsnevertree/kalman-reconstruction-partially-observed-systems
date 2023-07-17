@@ -326,6 +326,128 @@ def Kalman_SEM(x, y, H, R, nb_iter_SEM):  # , x_t, t):
     return x_s, P_s, M, tab_loglik, x_out, x_f, Q
 
 
+def Kalman_SEM_full_output(x, y, H, R, nb_iter_SEM):  # , x_t, t):
+    """
+    Apply the Kalman Stochastic Expectation Maximization alogrihtm to estimate
+    the state of a system. This function applies the Kalman Stochastic
+    Expectation Maximization alogrihtm to a system with linear dynamics and
+    Gaussian noise. Gives the results for each iteration in first axis!
+
+    A global linear regression is used to update the estimates of the
+    - true state transition matrix M and
+    - true process noise covariance matrix Q.
+
+    The underlying Kalman equations are:
+    x(t) = M x(t+dt) + Q
+    y(t) = H x(t) + R
+
+    Parameters
+    ----------
+    x : array-like, shape (T, n)
+        System state over time period of length T, having n states.
+    y : array-like, shape (T, p)
+        Observations of the system state observed over time.
+    H : array-like, shape (p, n)
+        First estimation of the observation matrix that maps the state space to the observation space.
+    R : array-like, shape (p, p)
+        First estimation of the observation noise covariance matrix.
+    nb_iter_SEM : int
+        Number of iterations that shall be performed for the alogithm.
+    seed : int, optional
+        Seed for the NumPy random number generator. By providing a seed,
+        you can ensure reproducibility of the random numbers generated.
+        If not specified, a default seed will be used 11.
+
+    Returns
+    -------
+    x_s : array, shape (nb_iter_SEM, T, n)
+        Smoothed updated state estimates after assimilating the observations.
+        This represents the state (x) of the system after the final iteration of the algorithm.
+    P_s : array, shape (nb_iter_SEM, T, n, n)
+        Smoothed error covariance matrices of the state estimates after assimilating the observations.
+        This represents the error covariance matrices as a function of time after the final iteration of the algorithm.
+    M : array, shape (nb_ier_SEM, n, n)
+        Estimation of the true state transition matrix M after the final iteration of the algorithm.
+    tab_loglik : array, shape (nb_iter_SEM)
+        Sum of the log-likelihod over time dimension for each iteration of the algorithm.
+    x_out : array, shape (nb_iter_SEM, T, n)
+        Simulated the new state based on a multivariate normal distribution which uses
+        x_s as mean and P_s as Covariance matrix.
+    x_f : array, shape (nb_iter_SEM, T, n)
+        Forecasted state estimates after assimilating the observations by the used Kalman Filter, after the final iteration of the algorithm.
+    Q : array shape (T, p, p)
+        Estimation of the true process noise covariance matrix Q after the final iteration of the algorithm.
+    """
+    # verify that non nans in the data
+    x_nans = np.sum(np.isnan(x)) == 0
+    y_nans = np.sum(np.isnan(y)) == 0
+    if not x_nans or not y_nans:
+        raise NotImplementedError(
+            "It seems that the provided 'x' or 'y' arrays contain nan values.\nThis is not supported yet!"
+        )
+
+    # fix the seed
+    np.random.seed(11)
+
+    # copy x
+    x_out = x.copy()
+
+    # shapes
+    n = np.shape(x_out)[1]
+    T = np.shape(x_out)[0]
+
+    # create array for the return
+    x_s_full = np.zeros((nb_iter_SEM, T, n))
+    P_s_full = np.zeros((nb_iter_SEM, T, n, n))
+    x_out_full = np.zeros_like(x_s_full)
+    x_f_full = np.zeros_like(x_s_full)
+    M_full = np.zeros((nb_iter_SEM, n, n))
+    Q_full = np.zeros_like(M_full)
+    # tab to store the np.log-likelihood
+    tab_loglik = []
+
+    # loop on the SEM iterations
+    for i in tqdm(np.arange(0, nb_iter_SEM)):
+        # Kalman parameters
+        reg = LinearRegression(fit_intercept=False).fit(x_out[:-1,], x_out[1:,])
+        M = reg.coef_
+        Q = np.cov((x_out[1:,] - reg.predict(x_out[:-1,])).T)
+        # R   = np.cov(y.T - H @ x.T)
+
+        # Kalman initialization
+        if i == 0:
+            x0 = np.zeros(n)
+            P0 = np.eye(n)
+        else:
+            x0 = x_s[0, :]
+            P0 = P_s[
+                0,
+                :,
+                :,
+            ]
+
+        # apply the Kalman smoother
+        x_f, P_f, x_a, P_a, x_s, P_s, loglik, P_s_lag = Kalman_smoother(
+            y, x0, P0, M, Q, H, R
+        )
+
+        # store the np.log-likelihod
+        tab_loglik = np.append(tab_loglik, sum(loglik))
+
+        # simulate the new x
+        for k in range(len(x_s)):
+            x_out[k, :] = np.random.multivariate_normal(x_s[k, :], P_s[k, :, :])
+
+        x_s_full[i, :] = x_s
+        P_s_full[i, :] = P_s
+        x_out_full[i, :] = x_out
+        x_f_full[i, :] = x_f
+        M_full[i, :] = M
+        Q_full[i, :] = Q
+
+    return x_s_full, P_s_full, M_full, tab_loglik, x_out_full, x_f_full, Q_full
+
+
 def Kalman_SEM_bis(x, y, H, R, nb_iter_SEM, M_init, Q_init):
     """Apply the stochastic expectation-maximization algorithm."""
 
