@@ -76,7 +76,9 @@ target/
 .ipynb_checkpoints/
 
 # exclude data from source control by default
-/data/
+data/*
+!data/*.py
+!data/scripts
 
 # Mac OS-specific storage files
 .DS_Store
@@ -90,3 +92,14 @@ target/
 
 # Temporary folder to store untracked files
 temporary/*
+
+# Figures in results folder
+results/*
+!results/scripts
+
+# For MlFLow need to exclude the tracking folder
+mlruns/*
+mlflow-artifacts/*
+
+# Include all .gitkeep files
+!*/*.gitkeep
