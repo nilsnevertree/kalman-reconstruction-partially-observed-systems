@@ -9,6 +9,6 @@ setup(
         "local_scheme": "node-and-date",
     },
     description="Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an iterative procedure.",
-    author="IMT-Atlantique-MEE",
+    author="Nils Niebaum",
     license="",
 )
