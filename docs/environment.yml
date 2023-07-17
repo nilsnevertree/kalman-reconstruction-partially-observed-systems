@@ -20,4 +20,5 @@ dependencies:
      - jupyter_client
      - sphinx_pangeo_theme
      - sphinx-copybutton
+     - pydata-sphinx-theme
      - sphinxcontrib-srclinks
