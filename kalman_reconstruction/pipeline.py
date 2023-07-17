@@ -1556,7 +1556,6 @@ def all_choords_as_dim(
         >>> da = xr.DataArray(data, coords=coords, dims=['location'])
         >>> expanded_da = all_choords_as_dim(da)
         >>> print(expanded_da)
-    
     """
     for dim in ds.coords:
         try:
@@ -2416,7 +2415,7 @@ def perfect_forcast(
     ...     states_model  (horizon, time, state_name) float64 0.0 1.0 2.0 ... nan nan
     ...     other_var     (horizon, time) float64 nan nan nan nan ... nan nan nan nan
     """
-    
+
     # first create the corresponding result Dataset
     # copy coords from kalman_SEM results
     result = xr.Dataset(coords=ds.coords)

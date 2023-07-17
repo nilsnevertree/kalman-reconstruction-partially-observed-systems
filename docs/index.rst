@@ -26,7 +26,7 @@
 kalman-reconstruction-partially-observered-systems
 =======================================================
 
-.. Repository to reconstruct partially observered systems using Kalman algorithms.
+Repository to reconstruct partially observed systems using Kalman algorithms.
 
 .. .. automodapi:: kalman_reconstruction.kalman
 ..    :members:
@@ -43,7 +43,7 @@ kalman-reconstruction-partially-observered-systems
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
-   
+
    kalman
    pipeline
    statistics
