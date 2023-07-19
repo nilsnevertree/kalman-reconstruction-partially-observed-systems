@@ -1,5 +1,6 @@
 kalman-reconstruction-partially-observered-systems
 ==============================
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an iterative procedure.
 
@@ -26,6 +27,10 @@ Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman 
     ├───temporary                               <- Folder to store files which shall not be traced.
     └───tests
 --------
+## Installation
+- Install directly from GitHub using pip:
+``pip install git+https://github.com/nilsnevertree/kalman-reconstruction-partially-observered-systems``
+- Clone the repository and run ``python -m pip install . -e`` in the repository folder.
 
 ## Pipeline Usage
 A more readable application and easy to use a ``pipeline`` is implemented.
@@ -76,10 +81,10 @@ Attributes:
     description:  Lorenz Model.
 ````
 
-### Applying the Lorenz Model:
+### Applying the Kalman_SEM wrapper ``xarray_Kalman_SEM``:
 ````python
 
-result = pipeline.run_Kalman_SEM_to_xarray(
+result = pipeline.xarray_Kalman_SEM(
     ds=data,
     state_variables=["x2", "x3"],
     random_variables=["z1", "z2", "z3"],
@@ -99,7 +104,7 @@ Coordinates:
   * time               (time) float64 0.0 0.01 0.02 0.03 ... 4.96 4.97 4.98 4.99
   * state_names        (state_names) <U2 'x2' 'x3' 'z1' 'z2' 'z3'
   * state_names_copy   (state_names_copy) <U2 'x2' 'x3' 'z1' 'z2' 'z3'
-  * kalman_itteration  (kalman_itteration) int32 0 1 2 3 4 5 6 7 8 9
+  * kalman_iteration   (kalman_iteration) int32 0 1 2 3 4 5 6 7 8 9
 Data variables:
     states             (time, state_names) float64 0.1254 28.92 ... -6.976
     uncertainties      (time, state_names, state_names_copy) float64 0.00548 ...
@@ -108,13 +113,21 @@ Data variables:
     log_likelihod      (kalman_itteration) float64 -2.733e+03 ... -888.1
 
 ````
-
-## Pre-commit
+## Contribution
+### Pre-commit
 In order to use linting, pre-commit is used in this repository.
 To lint your code, install [pre-commit](https://pre-commit.com/) and run ``pre-commit run --all-files`` before each commit.
 This takes care of formatting all files using the configuration from [.pre-commit-config.yaml](.pre-commit-config.yaml).
 
 Please note that the https://github.com/kynan/nbstripout is used to make sure that the output from notebooks is cleared.
 To disable it, comment out the part in [.pre-commit-config.yaml](.pre-commit-config.yaml?plain=1#L65)
+
+## Legal notes
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+The kalman algorithms in [kalman.py](./kalman_reconstruction/kalman.py) were provided by (Pierre Tandeo)[https://github.com/ptandeo] from the [Kalman](https://github.com/ptandeo/kalman) GitHub Repository, which was as of 2023-07-18 under GPL v3.
+
+For questions, raise an issue or contact [nilsnevertree](https://github.com/nilsnevertree)
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>

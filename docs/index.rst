@@ -44,10 +44,10 @@ Repository to reconstruct partially observed systems using Kalman algorithms.
    :maxdepth: 1
    :caption: Contents:
 
+   readme_link
    kalman
    pipeline
    statistics
-
 
 Indices and tables
 ------------------
