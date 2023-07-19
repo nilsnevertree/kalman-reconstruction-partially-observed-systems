@@ -12,16 +12,16 @@ dependencies:
    - numpydoc
    - sphinx
    - sphinx_rtd_theme
-   - ipython
-   - nbconvert
-   - nbformat
-   - ipykernel
-   - pandoc
+  #  - ipython
+  #  - nbconvert
+  #  - nbformat
+  #  - ipykernel
+  #  - pandoc
    - pip
    - pip:
-     - docrep
+    #  - docrep
      - nbsphinx
-     - jupyter_client
+    #  - jupyter_client
      - sphinx_pangeo_theme
      - sphinx-copybutton
      - pydata-sphinx-theme
