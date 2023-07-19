@@ -1,6 +1,6 @@
 name: kalman_reconstruction_docs
 dependencies:
-   - python=3.10
+   - python=3.11
    # If your docs code examples depend on other packages add them here
    - numpy
    - scipy
