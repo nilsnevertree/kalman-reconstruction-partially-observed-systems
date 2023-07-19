@@ -19,7 +19,7 @@ dependencies:
    - pandoc
    - pip
    - pip:
-     - docrep<=0.2.7
+     - docrep
      - nbsphinx
      - jupyter_client
      - sphinx_pangeo_theme
