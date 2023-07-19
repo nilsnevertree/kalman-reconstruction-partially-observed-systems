@@ -1,6 +1,7 @@
 kalman-reconstruction-partially-observered-systems
 ==============================
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Documentation Status](https://readthedocs.org/projects/kalman-reconstruction-partially-observed-systems/badge/?version=latest)](https://kalman-reconstruction-partially-observed-systems.readthedocs.io/en/latest/?badge=latest)
 
 Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman algorithms and an iterative procedure.
 
