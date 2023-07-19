@@ -131,5 +131,3 @@ The kalman algorithms in [kalman.py](./kalman_reconstruction/kalman.py) were pro
 For questions, raise an issue or contact [nilsnevertree](https://github.com/nilsnevertree)
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
-
-
