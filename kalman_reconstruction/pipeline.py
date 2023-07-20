@@ -33,10 +33,10 @@ def input_arrays_combined(
     """
     Create input arrays of observations (y) and states (x) for the
     Kalman_algorithms. The state is a concatenation of the observation
-    variables followed by the random variabels.
+    variables followed by the random variables.
 
-    Note:
-    - All arrays in the list must be 1D and of equal length T.
+    Notes:
+        - All arrays in the list must be 1D and of equal length T.
 
     Parameters:
         observation_list (list) len(p): List of observation variables.
@@ -46,6 +46,23 @@ def input_arrays_combined(
         Tuple : A Tuple containing the input arrays for the Kalman_algorithms.
             - states : np.ndarray shape(T, p+r),
             - observations : np.ndarray shape(T, p)
+
+    Examples:
+        >>> observation_list = [np.array([1, 2, 3]), np.array([4, 5, 6]), np.array([7, 8, 9])]
+        >>> random_list = [np.array([0.1, 0.2, 0.3]), np.array([0.4, 0.5, 0.6])]
+        >>> states, observations = input_arrays_combined(observation_list, random_list)
+
+        >>> # The 'states' thus have shape (T, p+r)
+        >>> print(states)
+        [[1.  4.  7.  0.1 0.4]
+         [2.  5.  8.  0.2 0.5]
+         [3.  6.  9.  0.3 0.6]]
+
+        >>> # The 'observations' thus have shape (T, p+r)
+        >>> print(observations)
+        [[1 4 7]
+         [2 5 8]
+         [3 6 9]]
     """
     states, observations = input_arrays(
         state_list=observation_list + random_list, observation_list=observation_list
@@ -60,8 +77,8 @@ def input_arrays(
     Create input arrays of observations (y) and states (x) for the
     Kalman_algorithms.
 
-    Note:
-    - All arrays in the list must be 1D and of equal length T.
+    Notes:
+        - All arrays in the list must be 1D and of equal length T.
 
     Parameters:
         state_list (list) len(n): List of state variables.
@@ -71,11 +88,28 @@ def input_arrays(
         Tuple : A Tuple containing the input arrays for the Kalman_algorithms.
             - states : np.ndarray shape(T, n),
             - observations : np.ndarray shape(T, p)
+
+    Examples:
+        >>> state_list = [np.array([0.1, 0.2, 0.3]), np.array([0.4, 0.5, 0.6])]
+        >>> observation_list = [np.array([1, 2, 3]), np.array([4, 5, 6]), np.array([7, 8, 9])]
+        >>> states, observations = input_arrays(state_list, observation_list)
+        >>> print(states)
+        [[0.1 0.4]
+         [0.2 0.5]
+         [0.3 0.6]]
+        >>> print(observations)
+        [[1 4 7]
+         [2 5 8]
+         [3 6 9]]
     """
     observations = np.array(observation_list).T
-    states = np.array(
-        state_list,
-    ).T
+    states = np.array(state_list).T
+    assert np.all(
+        observations[1:].shape == observations[:-1].shape
+    ), "Not all arrays in 'observations' are of the same shape!"
+    assert np.all(
+        states[1:].shape == states[:-1].shape
+    ), "Not all arrays in 'states' are of the same shape!"
     return states, observations
 
 
@@ -98,10 +132,27 @@ def input_matrices_H_R(
 
     Returns:
         Tuple: A Tuple containing the input matrices (H, R).
-        - H : np.ndarray, shape (p, n)
-            First estimation of the observation matrix that maps the state space to the observation space.
-        - R : np.ndarray, shape (p, p)
-            First estimation of the observation noise covariance matrix.
+            - H : np.ndarray, shape (p, n)
+                First estimation of the observation matrix that maps the state space to the observation space.
+            - R : np.ndarray, shape (p, p)
+                First estimation of the observation noise covariance matrix.
+    Examples:
+        >>> states = np.array(
+            [[1.0, 2.0, 3.0],
+             [3.0, 4.0, 5.0],
+             [5.0, 6.0, 7.0]])
+        >>> observations = np.array(
+            [[10.0, 20.0],
+             [30.0, 40.0],
+             [50.0, 60.0]])
+        >>> variance_obs_comp = 0.4
+        >>> H, R = input_matrices_H_R(states, observations, variance_obs_comp, axis=1)
+        >>> print(H)
+        [[1. 0. 0.]
+        [0. 1. 0.]]
+        >>> print(R)
+        [[0.4 0. ]
+        [0.  0.4]]
     """
     # shapes
     n = np.shape(states)[axis]
@@ -144,10 +195,25 @@ def input_matrices_M_Q(
 
     Returns:
         Tuple: A Tuple containing the input matrices (M, Q).
-        - M : np.ndarray, shape (n, n)
-            Model matrix that maps the state space to the next timestep.
-        - Q : np.ndarray, shape (n, n)
-            Model noise covariance matrix.
+            - M : np.ndarray, shape (n, n)
+                Model matrix that maps the state space to the next timestep.
+            - Q : np.ndarray, shape (n, n)
+                Model noise covariance matrix.
+
+    Examples:
+        >>> states = np.array(
+        ... [[1.0, 2.0],
+        ... [3.0, 4.0],
+        ... [5.0, 6.0]]
+        ... )
+        >>> variance_state_comp = 0.01
+        >>> M, Q = input_matrices_M_Q(states, variance_state_comp, axis=1)
+        >>> print(M)
+        [[1. 0.]
+         [0. 1.]]
+        >>> print(Q)
+        [[0.01 0.  ]
+         [0.   0.01]]
     """
     # shapes
     n = np.shape(states)[axis]
@@ -175,11 +241,16 @@ def xarray_Kalman_filter(
     suffix: str = "",
 ) -> xr.Dataset:
     """
-    NOTE: !!!!!!!!!! NOT READY !!!!!!!!!!
+    Notes: !!!!!!!!!! NOT READY !!!!!!!!!!
     Run the Kalman filter on the input dataset and return the results in an xarray Dataset.
 
     This function applies the Kalman filter algorithm on the specified observations and state variables in the given xarray dataset.
     The results are stored in a new xarray dataset.
+
+    Notes
+    -----
+        - The output variable names will be suffixed with the provided suffix parameter.
+        - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
 
     Parameters
     ----------
@@ -212,34 +283,35 @@ def xarray_Kalman_filter(
         New xarray dataset containing the results of the Kalman filter.
         Dimensions are:
 
-    Output Dimensions:
-    - time: The time dimension of the input dataset.
-    - state_name: Dimension representing the state variables.
-    - state_name_copy: Dimension representing a copy of the state variables.
+        Output Dimensions:
+            - time: The time dimension of the input dataset.
+            - state_name: Dimension representing the state variables.
+            - state_name_copy: Dimension representing a copy of the state variables.
 
-    Output Coordinates:
-    - time: Coordinates corresponding to the time of the input dataset.
-    - state_name: Coordinates corresponding to the state variables.
-    - state_name_copy: Coordinates corresponding to the copy of the state variables.
+        Output Coordinates:
+            - time: Coordinates corresponding to the time of the input dataset.
+            - state_name: Coordinates corresponding to the state variables.
+            - state_name_copy: Coordinates corresponding to the copy of the state variables.
 
-    Output Variables:
-    - state_forecast<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_forecast<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - state_assimilation<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_assimilation<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - log_likelihod<suffix>: DataArray containing the log-likelihood values for each timestep.
-        - Dimensions: time
-    # Not yet implemented.
-    # - kalman_gain<suffix>: DataArray containing the Kalman gain values for each timestep.
-    #     - Dimensions: time
-
-    Note:
-    - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+        Output Variables:
+            - state_forecast<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_forecast<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - state_assimilation<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_assimilation<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - log_likelihod<suffix>:
+                - DataArray containing the log-likelihood values for each timestep.
+                - Dimensions: time
+            # Not yet implemented.
+            # - kalman_gain<suffix>: DataArray containing the Kalman gain values for each timestep.
+            #     - Dimensions: time
     """
     # raise NotImplementedError("Function full deployed yet!")
     # function to create new names from a list of strings
@@ -361,11 +433,17 @@ def xarray_Kalman_filter_time_dependent(
     suffix: str = "",
 ) -> xr.Dataset:
     """
-    NOTE: !!!!!!!!!! NOT READY !!!!!!!!!!
+    Notes: !!!!!!!!!! NOT READY !!!!!!!!!!
     Run the Kalman filter in the time dependent version on the input dataset and return the results in an xarray Dataset.
 
     This function applies the Kalman filter algorithm on the specified observations and state variables in the given xarray dataset.
     The results are stored in a new xarray dataset.
+
+    Notes
+    -----
+        - The output variable names will be suffixed with the provided suffix parameter.
+        - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+
 
     Parameters
     ----------
@@ -400,34 +478,36 @@ def xarray_Kalman_filter_time_dependent(
         New xarray dataset containing the results of the Kalman filter.
         Dimensions are:
 
-    Output Dimensions:
-    - time: The time dimension of the input dataset.
-    - state_name: Dimension representing the state variables.
-    - state_name_copy: Dimension representing a copy of the state variables.
+        Output Dimensions:
+            - time: The time dimension of the input dataset.
+            - state_name: Dimension representing the state variables.
+            - state_name_copy: Dimension representing a copy of the state variables.
 
-    Output Coordinates:
-    - time: Coordinates corresponding to the time of the input dataset.
-    - state_name: Coordinates corresponding to the state variables.
-    - state_name_copy: Coordinates corresponding to the copy of the state variables.
+        Output Coordinates:
+            - time: Coordinates corresponding to the time of the input dataset.
+            - state_name: Coordinates corresponding to the state variables.
+            - state_name_copy: Coordinates corresponding to the copy of the state variables.
 
-    Output Variables:
-    - state_forecast<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_forecast<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - state_assimilation<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_assimilation<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - log_likelihod<suffix>: DataArray containing the log-likelihood values for each timestep.
-        - Dimensions: time
-    # Not yet implemented.
-    # - kalman_gain<suffix>: DataArray containing the Kalman gain values for each timestep.
-    #     - Dimensions: time
+        Output Variables:
+            - state_forecast<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_forecast<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - state_assimilation<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_assimilation<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - log_likelihod<suffix>:
+                - DataArray containing the log-likelihood values for each timestep.
+                - Dimensions: time
+            # Not yet implemented.
+            # - kalman_gain<suffix>: DataArray containing the Kalman gain values for each timestep.
+            #     - Dimensions: time
 
-    Note:
-    - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
     # raise NotImplementedError("Function full deployed yet!")
     # function to create new names from a list of strings
@@ -555,15 +635,18 @@ def xarray_Kalman_smoother(
     suffix: str = "",
 ) -> xr.Dataset:
     """
-    NOTE: !!!!!!!!!! NOT READY !!!!!!!!!!
+    Notes: !!!!!!!!!! NOT READY !!!!!!!!!!
     Run the Kalman smoother on the input dataset and return the results in an xarray Dataset.
 
     This function applies the Kalman smoother algorithm on the specified observations and state variables in the given xarray dataset.
     The results are stored in a new xarray dataset.
 
-    Note:
-    The initial state estimation will use the ``state_variables`` provided in ``ds``
-    and use the values of the array at position ``estimation_idx`` to create the initial state estimation used for the kalman smoother.
+    Notes
+    -----
+        - The initial state estimation will use the ``state_variables`` provided in ``ds``
+          and use the values of the array at position ``estimation_idx`` to create the initial state estimation used for the kalman smoother.
+        - The output variable names will be suffixed with the provided suffix parameter.
+        - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
 
     Parameters
     ----------
@@ -598,38 +681,42 @@ def xarray_Kalman_smoother(
     xarray.Dataset
         New xarray dataset containing the results of the Kalman smoother.
 
-    Output Dimensions:
-    - time: The time dimension of the input dataset.
-    - state_name: Dimension representing the state variables.
-    - state_name_copy: Dimension representing a copy of the state variables.
+        Output Dimensions:
+            - time: The time dimension of the input dataset.
+            - state_name: Dimension representing the state variables.
+            - state_name_copy: Dimension representing a copy of the state variables.
 
-    Output Coordinates:
-    - time: Coordinates corresponding to the time of the input dataset.
-    - state_name: Coordinates corresponding to the state variables.
-    - state_name_copy: Coordinates corresponding to the copy of the state variables.
+        Output Coordinates:
+            - time: Coordinates corresponding to the time of the input dataset.
+            - state_name: Coordinates corresponding to the state variables.
+            - state_name_copy: Coordinates corresponding to the copy of the state variables.
 
-    Output Variables:
-    - state_forecast<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_forecast<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - state_assimilation<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_assimilation<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - state_smooth<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_smooth<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - log_likelihod<suffix>: DataArray containing the log-likelihood values for each timestep.
-        - Dimensions: time
-    # Not yet implemented.
-    # - kalman_gain<suffix>: DataArray containing the Kalman gain values for each timestep.
-    #     - Dimensions: time
-
-    Note:
-    - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+        Output Variables:
+            - state_forecast<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_forecast<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - state_assimilation<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_assimilation<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - state_smooth<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_smooth<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - log_likelihod<suffix>:
+                - DataArray containing the log-likelihood values for each timestep.
+                - Dimensions: time
+            - kalman_gain<suffix>:
+                - !!! Not yet implemented. !!!
+                - DataArray containing the Kalman gain values for each timestep.
+                - Dimensions: time
     """
     # raise NotImplementedError("Function full deployed yet!")
     # function to create new names from a list of strings
@@ -763,15 +850,19 @@ def xarray_Kalman_smoother_time_dependent(
     suffix: str = "",
 ) -> xr.Dataset:
     """
-    NOTE: !!!!!!!!!! NOT READY !!!!!!!!!!
-    Run the Kalman smoother in the time dependent version on the input dataset and return the results in an xarray Dataset.
+    !!!!!!!!!! NOT READY !!!!!!!!!! Run the Kalman smoother in the time
+    dependent version on the input dataset and return the results in an xarray
+    Dataset.
 
     This function applies the Kalman smoother algorithm on the specified observations and state variables in the given xarray dataset.
     The results are stored in a new xarray dataset.
 
-    Note:
-    The initial state estimation will use the ``state_variables`` provided in ``ds``
-    and use the values of the array at position ``estimation_idx`` to create the initial state estimation used for the kalman smoother.
+    Notes
+    -----
+        - The initial state estimation will use the ``state_variables`` provided in ``ds``
+        and use the values of the array at position ``estimation_idx`` to create the initial state estimation used for the kalman smoother.
+        - The output variable names will be suffixed with the provided suffix parameter.
+        - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
 
     Parameters
     ----------
@@ -806,38 +897,41 @@ def xarray_Kalman_smoother_time_dependent(
     xarray.Dataset
         New xarray dataset containing the results of the Kalman smoother.
 
-    Output Dimensions:
-    - time: The time dimension of the input dataset.
-    - state_name: Dimension representing the state variables.
-    - state_name_copy: Dimension representing a copy of the state variables.
+        Output Dimensions:
+            - time: The time dimension of the input dataset.
+            - state_name: Dimension representing the state variables.
+            - state_name_copy: Dimension representing a copy of the state variables.
 
-    Output Coordinates:
-    - time: Coordinates corresponding to the time of the input dataset.
-    - state_name: Coordinates corresponding to the state variables.
-    - state_name_copy: Coordinates corresponding to the copy of the state variables.
+        Output Coordinates:
+            - time: Coordinates corresponding to the time of the input dataset.
+            - state_name: Coordinates corresponding to the state variables.
+            - state_name_copy: Coordinates corresponding to the copy of the state variables.
 
-    Output Variables:
-    - state_forecast<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_forecast<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - state_assimilation<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_assimilation<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - state_smooth<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance_smooth<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - log_likelihod<suffix>: DataArray containing the log-likelihood values for each timestep.
-        - Dimensions: time
-    # Not yet implemented.
-    # - kalman_gain<suffix>: DataArray containing the Kalman gain values for each timestep.
-    #     - Dimensions: time
-
-    Note:
-    - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+        Output Variables:
+            - state_forecast<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_forecast<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - state_assimilation<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_assimilation<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - state_smooth<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance_smooth<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - log_likelihod<suffix>:
+                - DataArray containing the log-likelihood values for each timestep.
+                - Dimensions: time
+            - # kalman_gain<suffix>:
+                - # DataArray containing the Kalman gain values for each timestep.
+                - # Dimensions: time
     """
     # raise NotImplementedError("Function full deployed yet!")
     # function to create new names from a list of strings
@@ -987,8 +1081,11 @@ def xarray_Kalman_SEM(
     It performs a specified number of iterations and computes the state estimates, covariance, transition matrix, and
     process noise covariance matrix. The results are stored in a new xarray dataset.
 
-    Note:
-    - The state_varianbles can contain latent variables which are not found in the observation_variables
+    Notes
+    -----
+        - The state_varianbles can contain latent variables which are not found in the observation_variables
+        - The output variable names will be suffixed with the provided suffix parameter.
+        - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
 
     Parameters
     ----------
@@ -1012,34 +1109,34 @@ def xarray_Kalman_SEM(
     -------
     xarray.Dataset
         New xarray dataset containing the results of the Kalman_SEM algorithm.
-        Dimensions are:
 
-    Output Dimensions:
-    - time: The time dimension of the input dataset.
-    - state_name: Dimension representing the state variables.
-    - state_name_copy: Dimension representing a copy of the state variables.
+        Output Dimensions:
+            - time: The time dimension of the input dataset.
+            - state_name: Dimension representing the state variables.
+            - state_name_copy: Dimension representing a copy of the state variables.
 
-    Output Coordinates:
-    - time: Coordinates corresponding to the time of the input dataset.
-    - state_name: Coordinates corresponding to the state variables.
-    - state_name_copy: Coordinates corresponding to the copy of the state variables.
-    - kalman_iteration: Coordinates representing the Kalman SEM iteration index.
+        Output Coordinates:
+            - time: Coordinates corresponding to the time of the input dataset.
+            - state_name: Coordinates corresponding to the state variables.
+            - state_name_copy: Coordinates corresponding to the copy of the state variables.
+            - kalman_iteration: Coordinates representing the Kalman SEM iteration index.
 
-    Output Variables:
-    - states<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - M<suffix>: DataArray containing the transition matrix M.
-        - Dimensions: state_name, state_name_copy
-    - Q<suffix>: DataArray containing the observation noise covariance matrix Q.
-        - Dimensions: state_name, state_name_copy
-    - log_likelihod<suffix>: DataArray containing the log-likelihood values for each Kalman SEM iteration.
-        - Dimensions: kalman_iteration
-
-    Note:
-    - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+        Output Variables:
+            - states<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - M<suffix>:
+                - DataArray containing the transition matrix M.
+                - Dimensions: state_name, state_name_copy
+            - Q<suffix>:
+                - DataArray containing the observation noise covariance matrix Q.
+                - Dimensions: state_name, state_name_copy
+            - log_likelihod<suffix>:
+                - DataArray containing the log-likelihood values for each Kalman SEM iteration.
+                - Dimensions: kalman_iteration
     """
 
     # function to create new names from a list of strings
@@ -1142,8 +1239,11 @@ def xarray_Kalman_SEM_time_dependent(
     It performs a specified number of iterations and computes the state estimates, covariance, transition matrix, and
     process noise covariance matrix. The results are stored in a new xarray dataset.
 
-    Note:
-    - The state_varianbles can contain latent variables which are not found in the observation_variables
+    Notes
+    -----
+        - The state_varianbles can contain latent variables which are not found in the observation_variables
+        - The output variable names will be suffixed with the provided suffix parameter.
+        - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
 
     Parameters
     ----------
@@ -1170,34 +1270,34 @@ def xarray_Kalman_SEM_time_dependent(
     -------
     xarray.Dataset
         New xarray dataset containing the results of the Kalman_SEM algorithm.
-        Dimensions are:
 
-    Output Dimensions:
-    - time: The time dimension of the input dataset. shape(t)
-    - state_name: Dimension representing the state variables. shape(n)
-    - state_name_copy: Dimension representing a copy of the state variables. shape(n)
+        Output Dimensions:
+            - time: The time dimension of the input dataset. shape(t)
+            - state_name: Dimension representing the state variables. shape(n)
+            - state_name_copy: Dimension representing a copy of the state variables. shape(n)
 
-    Output Coordinates:
-    - time: Coordinates corresponding to the time of the input dataset.
-    - state_name: Coordinates corresponding to the state variables.
-    - state_name_copy: Coordinates corresponding to the copy of the state variables.
-    - kalman_iteration: Coordinates representing the Kalman SEM iteration index.
+        Output Coordinates:
+            - time: Coordinates corresponding to the time of the input dataset.
+            - state_name: Coordinates corresponding to the state variables.
+            - state_name_copy: Coordinates corresponding to the copy of the state variables.
+            - kalman_iteration: Coordinates representing the Kalman SEM iteration index.
 
-    Output Variables:
-    - states<suffix>: DataArray containing the estimated states over time.
-        - Dimensions: time, state_name
-    - covariance<suffix>: DataArray containing the covariance of the estimated states over time.
-        - Dimensions: time, state_name, state_name_copy
-    - M<suffix>: DataArray containing the transition matrix M.
-        - Dimensions: state_name, state_name_copy
-    - Q<suffix>: DataArray containing the observation noise covariance matrix Q.
-        - Dimensions: state_name, state_name_copy
-    - log_likelihod<suffix>: DataArray containing the log-likelihood values for each Kalman SEM iteration.
-        - Dimensions: kalman_iteration
-
-    Note:
-    - The output variable names will be suffixed with the provided suffix parameter.
-    - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
+        Output Variables:
+            - states<suffix>:
+                - DataArray containing the estimated states over time.
+                - Dimensions: time, state_name
+            - covariance<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
+                - Dimensions: time, state_name, state_name_copy
+            - M<suffix>:
+                - DataArray containing the transition matrix M.
+                - Dimensions: state_name, state_name_copy
+            - Q<suffix>:
+                - DataArray containing the observation noise covariance matrix Q.
+                - Dimensions: state_name, state_name_copy
+            - log_likelihod<suffix>:
+                - DataArray containing the log-likelihood values for each Kalman SEM iteration.
+                - Dimensions: kalman_iteration
     """
 
     # function to create new names from a list of strings
@@ -1299,14 +1399,18 @@ def xarray_Kalman_SEM_full_output(
 ) -> xr.Dataset:
     """
     Run the Kalman SEM algorithm on the input dataset and return the results in
-    an xarray Dataset.
+    an xarray Dataset. The output will contain the values of the returns for each iteration.
+    The function uses ``kalman.Kalman_SEM_full_output``.
 
     This function applies the Kalman_SEM algorithm on the specified observations and state variables in the given xarray dataset.
     It performs a specified number of iterations and computes the state estimates, covariance, transition matrix, and
     process noise covariance matrix. The results are stored in a new xarray dataset.
 
-    Note:
-    - The state_varianbles can contain latent variables which are not found in the observation_variables
+    Notes
+    -----
+        - The state_varianbles can contain latent variables which are not found in the observation_variables
+        - The output variable names will be suffixed with the provided suffix parameter.
+        - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
 
     Parameters
     ----------
@@ -1344,20 +1448,21 @@ def xarray_Kalman_SEM_full_output(
             - kalman_iteration: Coordinates representing the Kalman SEM iteration index.
 
         Output Variables:
-            - states<suffix>: DataArray containing the estimated states over time.
+            - states<suffix>:
+                -DataArray containing the estimated states over time.
                 - Dimensions: time, state_name
-            - covariance<suffix>: DataArray containing the covariance of the estimated states over time.
+            - covariance<suffix>:
+                - DataArray containing the covariance of the estimated states over time.
                 - Dimensions: time, state_name, state_name_copy
-            - M<suffix>: DataArray containing the transition matrix M.
+            - M<suffix>:
+                - DataArray containing the transition matrix M.
                 - Dimensions: state_name, state_name_copy
-            - Q<suffix>: DataArray containing the observation noise covariance matrix Q.
+            - Q<suffix>:
+                - DataArray containing the observation noise covariance matrix Q.
                 - Dimensions: state_name, state_name_copy
-            - log_likelihod<suffix>: DataArray containing the log-likelihood values for each Kalman SEM iteration.
+            - log_likelihod<suffix>:
+                - DataArray containing the log-likelihood values for each Kalman SEM iteration.
                 - Dimensions: kalman_iteration
-
-    Note:
-        - The output variable names will be suffixed with the provided suffix parameter.
-        - If your given xr.Dataset was provided using a selection by values or indices, it is suggested to use the expand_and_assign_coords() function in order to contain the correct values of the dimensions and coordinates.
     """
 
     # function to create new names from a list of strings
@@ -1470,45 +1575,42 @@ def expand_and_assign_coords(
         xr.Dataset: The dataset with expanded dimensions and assigned coordinates.
 
     Example:
-    >>> # Create example datasets
-    >>> ds1 = xr.Dataset(
-        {'var1': (('x', 'y'), np.random.rand(10, 20))},
-        coords={'x': range(10), 'y': range(20)}
-    )
-    >>> ds1
-
-    <xarray.Dataset>
-    Dimensions:  (x: 10, y: 20)
-    Coordinates:
-    * x        (x) int32 0 1 2 3 4 5 6 7 8 9
-    * y        (y) int32 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
-    Data variables:
-    var1     (x, y) float64
-
-    >>> ds2 = xr.Dataset(
-        {'var2': ('z', np.random.rand(5))},
-        coords={'z': range(5)}
-    )
-    >>> ds2
-    <xarray.Dataset>
-    Dimensions:  (z: 5)
-    Coordinates:
-    * z        (z) int32 0 1 2 3 4
-    Data variables:
-        var2     (z) float64
-
-    >>> select_dict = {'z': 2}
-    >>> # Call the function
-    >>> result = expand_and_assign_coords(ds1, ds2, select_dict)
-    >>> print(result)
-    <xarray.Dataset>
-    Dimensions:  (z: 1, x: 10, y: 20)
-    Coordinates:
-    * x        (x) int32 0 1 2 3 4 5 6 7 8 9
-    * y        (y) int32 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
-    * z        (z) int32 2
-    Data variables:
-        var1     (z, x, y) float64
+        >>> # Create example datasets
+        >>> ds1 = xr.Dataset(
+            {'var1': (('x', 'y'), np.random.rand(10, 20))},
+            coords={'x': range(10), 'y': range(20)}
+        )
+        >>> ds1
+        <xarray.Dataset>
+        Dimensions:  (x: 10, y: 20)
+        Coordinates:
+        * x        (x) int32 0 1 2 3 4 5 6 7 8 9
+        * y        (y) int32 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
+        Data variables:
+        var1     (x, y) float64
+        >>> ds2 = xr.Dataset(
+            {'var2': ('z', np.random.rand(5))},
+            coords={'z': range(5)}
+        )
+        >>> ds2
+        <xarray.Dataset>
+        Dimensions:  (z: 5)
+        Coordinates:
+        * z        (z) int32 0 1 2 3 4
+        Data variables:
+            var2     (z) float64
+        >>> select_dict = {'z': 2}
+        >>> # Call the function
+        >>> result = expand_and_assign_coords(ds1, ds2, select_dict)
+        >>> print(result)
+        <xarray.Dataset>
+        Dimensions:  (z: 1, x: 10, y: 20)
+        Coordinates:
+        * x        (x) int32 0 1 2 3 4 5 6 7 8 9
+        * y        (y) int32 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
+        * z        (z) int32 2
+        Data variables:
+            var1     (z, x, y) float64
     """
     selection_vars = list(select_dict.keys())
     ds1 = ds1.drop_vars(selection_vars, errors="ignore")
@@ -1535,10 +1637,10 @@ def all_choords_as_dim(
     If a coordinate cannot be expanded (e.g., it already exists as a dimension), it is skipped.
 
     Parameters:
-        ds (Union[xr.Dataset, xr.DataArray]): The input xarray Dataset or DataArray.
+        - ds (Union[xr.Dataset, xr.DataArray]): The input xarray Dataset or DataArray.
 
     Returns:
-        Union[xr.Dataset, xr.DataArray]: The xarray object with all coordinates expanded as dimensions.
+        - Union[xr.Dataset, xr.DataArray]: The xarray object with all coordinates expanded as dimensions.
 
     Examples:
         >>> # Example 1: Expand coordinates in a Dataset
@@ -1560,6 +1662,31 @@ def all_choords_as_dim(
     for dim in ds.coords:
         try:
             ds = ds.expand_dims(dim)
+        except:
+            pass
+    return ds
+
+
+def all_dims_as_choords(
+    ds: Union[xr.Dataset, xr.DataArray]
+) -> Union[xr.Dataset, xr.DataArray]:
+    """
+    TODO: UPDATE NEEDED!
+    Expand all coordinates in the xarray Dataset or DataArray as new
+    dimensions.
+
+    This function expands each coordinate in the xarray Dataset or DataArray as a new dimension.
+    If a coordinate cannot be expanded (e.g., it already exists as a dimension), it is skipped.
+
+    Parameters:
+        - ds (Union[xr.Dataset, xr.DataArray]): The input xarray Dataset or DataArray.
+
+    Returns:
+        - Union[xr.Dataset, xr.DataArray]: The xarray object with all coordinates expanded as dimensions.
+    """
+    for dim in ds.dims:
+        try:
+            ds = ds.assign_coords({dim: ds[dim]})
         except:
             pass
     return ds
@@ -1641,27 +1768,27 @@ def add_empty_dataarrays(ds1: xr.Dataset, ds2: xr.Dataset, new_dimension: str) -
     Returns:
         None
 
-    Example:
-    >>> ds1 = xr.Dataset(
-        {"var1": (("x", "y"), np.zeros((3, 3)))},
-        coords={"x": [1, 2, 3], "y": [4, 5, 6]}
-    )
-    >>> ds2 = xr.Dataset(
-        {"var2": (("x", "y"), np.ones((3, 3)))},
-        coords={"x": [2, 3, 4], "y": [5, 6, 7]}
-    )
-    >>> new_dimension = "run"
-    >>> add_all_empty_dataarray(ds1, ds2, new_dimension)
-    >>> print(ds1)
-    <xarray.Dataset>
-    Dimensions:  (x: 3, y: 3, run: 1)
-    Coordinates:
-      * x        (x) int64 1 2 3
-      * y        (y) int64 4 5 6
-      * run      (run) int64 0
-    Data variables:
-        var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-        var2     (run, x, y) float64 nan nan nan nan nan nan nan nan nan
+    Examples:
+        >>> ds1 = xr.Dataset(
+        ... {"var1": (("x", "y"), np.zeros((3, 3)))},
+        ... coords={"x": [1, 2, 3], "y": [4, 5, 6]}
+        ... )
+        >>> ds2 = xr.Dataset(
+        ... {"var2": (("x", "y"), np.ones((3, 3)))},
+        ... coords={"x": [2, 3, 4], "y": [5, 6, 7]}
+        ... )
+        >>> new_dimension = "run"
+        >>> add_all_empty_dataarray(ds1, ds2, new_dimension)
+        >>> print(ds1)
+        ... <xarray.Dataset>
+        ... Dimensions:  (x: 3, y: 3, run: 1)
+        ... Coordinates:
+        ...   * x        (x) int64 1 2 3
+        ...   * y        (y) int64 4 5 6
+        ...   * run      (run) int64 0
+        ... Data variables:
+        ...     var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+        ...     var2     (run, x, y) float64 nan nan nan nan nan nan nan nan nan
     """
 
     # Iterate over all variables in ds2
@@ -1690,25 +1817,25 @@ def assign_variables_by_selection(
         None
 
     Example:
-    >>> ds1 = xr.Dataset(
-        {"var1": (("x", "y"), np.zeros((3, 3))), "var2": (("x", "y"), np.ones((3, 3)))},
-        coords={"x": [1, 2, 3], "y": [4, 5, 6]}
-    )
-    >>> ds2 = xr.Dataset(
-        {"var1": (("x", "y"), np.full((3, 3), 2)), "var2": (("x", "y"), np.full((3, 3), 3))},
-        coords={"x": [2, 3, 4], "y": [5, 6, 7]}
-    )
-    >>> select_dict = {"x": 2, "y": 6}
-    >>> set_all_variables_for_selection(ds1, ds2, select_dict)
-    >>> print(ds1)
-    <xarray.Dataset>
-    Dimensions:  (x: 3, y: 3)
-    Coordinates:
-      * x        (x) int64 1 2 3
-      * y        (y) int64 4 5 6
-    Data variables:
-        var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 2.0 0.0 0.0 0.0
-        var2     (x, y) float64 1.0 1.0 1.0 1.0 1.0 3.0 1.0 1.0 1.0
+        >>> ds1 = xr.Dataset(
+            {"var1": (("x", "y"), np.zeros((3, 3))), "var2": (("x", "y"), np.ones((3, 3)))},
+            coords={"x": [1, 2, 3], "y": [4, 5, 6]}
+        )
+        >>> ds2 = xr.Dataset(
+            {"var1": (("x", "y"), np.full((3, 3), 2)), "var2": (("x", "y"), np.full((3, 3), 3))},
+            coords={"x": [2, 3, 4], "y": [5, 6, 7]}
+        )
+        >>> select_dict = {"x": 2, "y": 6}
+        >>> set_all_variables_for_selection(ds1, ds2, select_dict)
+        >>> print(ds1)
+        <xarray.Dataset>
+        Dimensions:  (x: 3, y: 3)
+        Coordinates:
+        * x        (x) int64 1 2 3
+        * y        (y) int64 4 5 6
+        Data variables:
+            var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 2.0 0.0 0.0 0.0
+            var2     (x, y) float64 1.0 1.0 1.0 1.0 1.0 3.0 1.0 1.0 1.0
     """
 
     # Iterate over all variables in ds2
@@ -1769,26 +1896,26 @@ def assign_variables_by_double_selection(
     Returns:
         None
 
-    Example:
-    >>> ds1 = xr.Dataset(
-        {"var1": (("x", "y"), np.zeros((3, 3))), "var2": (("x", "y"), np.ones((3, 3)))},
-        coords={"x": [1, 2, 3], "y": [4, 5, 6]}
-    )
-    >>> ds2 = xr.Dataset(
-        {"var1": (("x", "y"), np.full((3, 3), 2)), "var2": (("x", "y"), np.full((3, 3), 3))},
-        coords={"x": [2, 3, 4], "y": [5, 6, 7]}
-    )
-    >>> select_dict = {"x": 2, "y": 6}
-    >>> set_all_variables_for_selection(ds1, ds2, select_dict)
-    >>> print(ds1)
-    <xarray.Dataset>
-    Dimensions:  (x: 3, y: 3)
-    Coordinates:
-      * x        (x) int64 1 2 3
-      * y        (y) int64 4 5 6
-    Data variables:
-        var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 2.0 0.0 0.0 0.0
-        var2     (x, y) float64 1.0 1.0 1.0 1.0 1.0 3.0 1.0 1.0 1.0
+    Examples:
+        >>> ds1 = xr.Dataset(
+            {"var1": (("x", "y"), np.zeros((3, 3))), "var2": (("x", "y"), np.ones((3, 3)))},
+            coords={"x": [1, 2, 3], "y": [4, 5, 6]}
+        )
+        >>> ds2 = xr.Dataset(
+            {"var1": (("x", "y"), np.full((3, 3), 2)), "var2": (("x", "y"), np.full((3, 3), 3))},
+            coords={"x": [2, 3, 4], "y": [5, 6, 7]}
+        )
+        >>> select_dict = {"x": 2, "y": 6}
+        >>> set_all_variables_for_selection(ds1, ds2, select_dict)
+        >>> print(ds1)
+        <xarray.Dataset>
+        Dimensions:  (x: 3, y: 3)
+        Coordinates:
+        * x        (x) int64 1 2 3
+        * y        (y) int64 4 5 6
+        Data variables:
+            var1     (x, y) float64 0.0 0.0 0.0 0.0 0.0 2.0 0.0 0.0 0.0
+            var2     (x, y) float64 1.0 1.0 1.0 1.0 1.0 3.0 1.0 1.0 1.0
     """
 
     if _force:
@@ -1881,8 +2008,8 @@ def run_function_on_multiple_subdatasets(
     It uses the subdataset_selections iterable to select specific subsets of data from the parent dataset.
     The processing function should take an xr.Dataset as its input and return an xr.Dataset as its output.
 
-    Note:
-    - the resulting arrays contain np.nan wherever the
+    Notes:
+        - the resulting arrays contain np.nan wherever the
 
     Parameters:
         processing_function (Callable): The processing function to be applied to each subdataset.
@@ -1969,8 +2096,8 @@ def run_function_on_multiple_time_slices(
     It uses the time_slices iterable to select specific subsets of data from the parent dataset.
     The processing function should take an xr.Dataset as its input and return an xr.Dataset as its output.
 
-    Note:
-    - the resulting arrays contain np.nan wherever the
+    Notes:
+        - the resulting arrays contain np.nan wherever the
 
     Parameters:
         processing_function (Callable): The processing function to be applied to each subdataset.
@@ -2078,11 +2205,9 @@ def forcast_from_kalman(
         xr.Dataset: The dataset containing the forecasted states and covariance matrices.
 
     Example:
-        '''
-        # Generate forecasts with a forecast length of 30
-        # Create data arrays
+        Generate forecasts with a forecast length of 30
 
-        # Create data arrays
+        >>> # Create example data
         >>> time = np.array([0.0, 0.001, 0.002])
         >>> state_name = np.array(['x', 'y', 'z'])
         >>> state_name_copy = np.array(['x', 'y', 'z'])
@@ -2095,11 +2220,11 @@ def forcast_from_kalman(
                 [[0.000105, 0.000086, 0.0012],
                 [0.000086, 0.000131, -0.0015],
                 [0.0012, -0.0015, 0.256]],
-
+                #
                 [[0.000075, 0.000021, 0.000184],
                 [0.000021, 0.000077, -0.000201],
                 [0.000184, -0.000201, 1.446]],
-
+                #
                 [[0.000078, 0.000018, -0.000034],
                 [0.000018, 0.000079, 0.000024],
                 [-0.000034, 0.000024, 1.553]]
@@ -2115,10 +2240,9 @@ def forcast_from_kalman(
                 [-0.0077, 0.0102, 3.028]
                 ])
 
-        # Create the xarray Dataset
+        >>> # Create the xarray Dataset
         >>> ds = xr.Dataset(coords={'time': time, 'state_name': state_name, 'state_name_copy': state_name_copy})
-
-        # Add data variables
+        >>> # Add data variables
         >>> ds['states'] = (('time', 'state_name'), states_data)
         >>> ds['covariance'] = (('time', 'state_name', 'state_name_copy'), covariance_data)
         >>> ds['M'] = (('state_name', 'state_name_copy'), M_data)
@@ -2131,16 +2255,16 @@ def forcast_from_kalman(
                 covariance_var_name = "covariance",
                 forecast_length = 10,
         )
-        >>> print(forecast)
 
-        # Access the forecasted states and covariance matrices
+        >>> # Access the forecasted states and covariance matrices
         >>> forecast_states = forecast["states"]
         >>> forecast_covariance = forecast["covariance"]
-
-        # Access a specific forecasted state and covariance matrix at horizon index 5
+        >>> # Access a specific forecasted state and covariance matrix at horizon index 5
         >>> state_at_horizon_5 = forecast_states.sel(horizon=5)
         >>> covariance_at_horizon_5 = forecast_covariance.sel(horizon=5)
-        '''
+
+    Notes:
+        - You can use the ``from_standard_dataset`` function too.
     """
     # first create the corresponding result Dataset
     # copy coords from kalman_SEM results
@@ -2200,54 +2324,58 @@ def forcast_from_kalman(
 
 
 def to_standard_dataset(
-    ds: xr.Dataset, states_variables: Union[str, Iterable[str]] = "all"
+    ds: xr.Dataset,
+    states_variables: Union[str, Iterable[str]] = "all",
+    new_dim: str = "states",
 ) -> xr.Dataset:
     """
     Convert a dataset to a standard dataset format for state variables.
 
-    This function converts the provided dataset `ds` into a standard dataset format suitable for state variables.
+    This function converts the provided dataset `ds` into a standard dataset format.
+    This format includes the new dimension ``new_dim``.
     It creates a new xr.Dataset where each state variable becomes a separate coordinate in the "states" variable.
 
     Parameters:
         ds (xr.Dataset): The dataset to be converted.
         states_variables (str or Iterable[str]): The state variables to include in the conversion.
-            If "all", all data variables in `ds` will be considered as state variables.
-            If a string or iterable of strings is provided, only the specified variables will be considered as state variables.
+            - If "all", all data variables in `ds` will be considered as state variables.
+            - If a string or iterable of strings is provided, only the specified variables will be considered as state variables.
+        new_dim (str) : Name of the new dimension storing the values of states_variables. Default to "states".
 
     Returns:
         xr.Dataset: The converted dataset in the standard format.
 
-        The returned dataset has the following variables:
-        - "states" (dims: ["state_name", *ds.dims]): The state variables in the standard format.
+            Output Variables:
+                - "states" (dims: ["state_name", *ds.dims]): The state variables in the standard format.
 
-        The returned dataset has the following dimensions:
-        - "state_name": The dimension representing the state variables.
-        - Additional dimensions inherited from the input dataset `ds`.
+            Output Dimensions:
+                - "state_name": The dimension representing the state variables.
+                - Additional dimensions inherited from the input dataset `ds`.
 
-        The returned dataset has the following coordinates:
-        - Coordinates inherited from the input dataset `ds`.
-        - "state_name": The values of the state variable names.
+            Output Coordinates:
+                - "state_name": The values of the state variable names.
+                - Coordinates inherited from the input dataset `ds`.
 
     Example:
-    >>> ds = xr.Dataset(
-        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
-        coords={
-            "time": pd.date_range("2022-01-01", periods=365),
-            "latitude": [30, 40, 50],
-            "longitude": [-120, -110, -100],
-        },
-    )
-    >>> converted_ds = to_standard_dataset(ds, states_variables=["temperature"])
-    >>> print(converted_ds)
-    <xarray.Dataset>
-    Dimensions:    (state_name: 1, time: 365, latitude: 3, longitude: 3)
-    Coordinates:
-      * time       (time) datetime64[ns] 2022-01-01 ... 2022-12-31
-      * latitude   (latitude) int64 30 40 50
-      * longitude  (longitude) int64 -120 -110 -100
-      * state_name (state_name) <U11 'temperature'
-    Data variables:
-        states     (state_name, time, latitude, longitude) float64 ...
+        >>> ds = xr.Dataset(
+        ...     {"temperature": (("time", "latitude", "longitude"), temperature_data)},
+        ...     coords={
+        ...         "time": pd.date_range("2022-01-01", periods=365),
+        ...         "latitude": [30, 40, 50],
+        ...         "longitude": [-120, -110, -100],
+        ...     },
+        ... )
+        >>> converted_ds = to_standard_dataset(ds, states_variables=["temperature"])
+        >>> print(converted_ds)
+        ... <xarray.Dataset>
+        ... Dimensions:    (state_name: 1, time: 365, latitude: 3, longitude: 3)
+        ... Coordinates:
+        ...   * time       (time) datetime64[ns] 2022-01-01 ... 2022-12-31
+        ...   * latitude   (latitude) int64 30 40 50
+        ...   * longitude  (longitude) int64 -120 -110 -100
+        ...   * state_name (state_name) <U11 'temperature'
+        ... Data variables:
+        ...     states     (state_name, time, latitude, longitude) float64 ...
     """
 
     if states_variables == "all":
@@ -2264,13 +2392,13 @@ def to_standard_dataset(
     state = states_variables[0]
     # this should only use dimensional coordinates, thus only use these list of coords:
     coords = [result.state_name] + [ds[state].coords[var] for var in ds.dims]
-    result["states"] = xr.DataArray(coords=coords)
+    result[new_dim] = xr.DataArray(coords=coords)
     # fill it
     for state in states_variables:
         assign_variable_by_double_selection(
             ds1=result,
             da2=ds[state],
-            var_name="states",
+            var_name=new_dim,
             select_dict1=(dict(state_name=state)),
             select_dict2=dict(),
         )
@@ -2280,70 +2408,91 @@ def to_standard_dataset(
 def from_standard_dataset(
     ds: xr.Dataset,
     var_name: str = "states",
-    state_name: str = "state_name",
+    dim_name: str = "state_name",
     suffix: str = "",
     prefix: str = "",
 ) -> xr.Dataset:
     """
-    Convert the DataArray ``var_name`` from a standard dataset format back to the original dataset format.
+    Convert the DataArray ``var_name`` from a standard dataset ``ds`` to a new Dataset.
+    The input ``var_name`` need to have dimension ``dim_name``. The values of ``dim_name`` will be used to
 
     This function converts the provided dataset `ds` in the standard format back into the original dataset format.
     It merges the state variables stored in the ``var_name`` variable back into separate data variables.
 
-    Note:
-    - The provided DataArray corresponding to ds[``var_name``] needs to have dimension "state_name" as a valid dimension or coordinate.
-    - The output names can be modified using the ``prefix`` and ``suffix`` args
+    Notes:
+        - The provided DataArray corresponding to ``ds`` [ ``var_name`` ] needs to have dimension ``dim_name`` as a valid dimension or coordinate.
+        - The output names can be modified using the ``prefix`` and ``suffix`` args
 
     Parameters:
         ds (xr.Dataset): The dataset in the standard format.
         var_name (str): Variable name for which the separate data variables shall be used.
-        state_name (str): dimension and coordinate name use in the standard dataset to specify the dimension of "states" variables.
+        dim_name (str): dimension and coordinate name use in the standard dataset to specify the dimension of "states" variables.
         suffix (str, optional) : Suffix to be appended to the variable names in the output dataset.
             - Default is an empty string.
         prefix (str, optional) : Prefix to be appended to the variable names in the output dataset.
             - Default is an empty string.
 
     Returns:
-        xr.Dataset: The converted dataset in the original format.
+        xr.Dataset:
+            The converted dataset in the original format.
 
-    Example:
-    >>> ds = xr.Dataset(
-        {"weather_states": (("state_name", *ds.dims), states_data)},
-        coords={
-            "state_name": ["temperature", "pressure"],
-            "time": pd.date_range("2022-01-01", periods=365),
-            "latitude": [30, 40, 50],
-            "longitude": [-120, -110, -100],
-        },
-    )
-    >>> converted_ds = from_standard_dataset(ds, var_name = "weather_states)
-    >>> print(converted_ds)
-    <xarray.Dataset>
-    Dimensions:    (time: 365, latitude: 3, longitude: 3)
-    Coordinates:
-      * time       (time) datetime64[ns] 2022-01-01 ... 2022-12-31
-      * latitude   (latitude) int64 30 40 50
-      * longitude  (longitude) int64 -120 -110 -100
-    Data variables:
-        temperature (time, latitude, longitude) float64 ...
-        pressure    (time, latitude, longitude) float64 ...
+    Examples:
+
+        Create the dataset
+
+        >>> ds_init = xr.Dataset(
+        ...     {
+        ...     "temperature": (("time", "latitude", "longitude"), temperature_data),
+        ...     "pressure": (("time", "latitude", "longitude"), pressure_data)
+        ...     },
+        ...     coords={
+        ...         "time": pd.date_range("2022-01-01", periods=365),
+        ...         "latitude": [30, 40, 50],
+        ...         "longitude": [-120, -110, -100],
+        ...     },
+        ... )
+        >>> states_data = n.concatenate((temperature_data, pressure_data), axis=0)
+        >>> ds = xr.Dataset(
+        ...     {"weather_states": (("state_name", *ds.dims), states_data)},
+        ...     coords={
+        ...         "state_name": ["temperature", "pressure"],
+        ...         "time": pd.date_range("2022-01-01", periods=365),
+        ...         "latitude": [30, 40, 50],
+        ...         "longitude": [-120, -110, -100],
+        ...     },
+        ... )
+
+        Convert the dataset
+
+        >>> converted_ds = from_standard_dataset(ds, var_name = "weather_states, dim_name = "state_name)
+        >>> print(converted_ds)
+        ... <xarray.Dataset>
+        ... Dimensions:    (time: 365, latitude: 3, longitude: 3)
+        ... Coordinates:
+        ...   * time       (time) datetime64[ns] 2022-01-01 ... 2022-12-31
+        ...   * latitude   (latitude) int64 30 40 50
+        ...   * longitude  (longitude) int64 -120 -110 -100
+        ... Data variables:
+        ...     temperature (time, latitude, longitude) float64 ...
+        ...     pressure    (time, latitude, longitude) float64 ...
+
     """
     join_names = lambda l: "".join(l)
 
-    variables = ds.coords[state_name].values
+    variables = ds.coords[dim_name].values
     data_vars = {
         join_names(
             [prefix, var, suffix]
         ): ds[  # var names is modified by prefix and suffix
             var_name
         ].sel(
-            {f"{state_name}": var}
+            {f"{dim_name}": var}
         )  # values
         for var in variables
     }
     result = xr.Dataset(data_vars, coords=ds.coords)
-    # no drop the ``state_name``
-    return result.drop_vars(state_name)
+    # now drop the ``dim_name``
+    return result.drop_vars(dim_name)
 
 
 def perfect_forcast(
@@ -2360,7 +2509,7 @@ def perfect_forcast(
 
     This function generates perfect forecasts for a provided dataset containing a DataArray containing the states.
 
-    Note:
+    Notes:
     The function expects a dataset of the same form as the `to_standard_dataset` function returns:
     - States array with dimensions [``forecast_dim``, "state_name"].
     Note that the forecast_length includes the current timestep.
@@ -2377,16 +2526,16 @@ def perfect_forcast(
     Returns:
         xr.Dataset: The dataset containing the forecasted states and covariance matrices.
 
-        The returned dataset has the following variables:
-        - "states" (dims: ["horizon", "state_name"]): The forecasted states at each horizon step.
+        Variables:
+            - "states" (dims: ["horizon", "state_name"]): The forecasted states at each horizon step.
 
-        The returned dataset has the following dimensions:
-        - ``new_dimension``: The forecast horizon dimension.
-        - Additional dimensions inherited from the input dataset `ds`.
+        Dimensions:
+            - ``new_dimension``: The forecast horizon dimension.
+            - Additional dimensions inherited from the input dataset `ds`.
 
-        The returned dataset has the following coordinates:
-        - Coordinates inherited from the input dataset `ds`.
-        - ``new_dimension``: The values of the forecast horizon dimension, ranging from 0 to `forecast_length - 1`.
+        Coordinates:
+            - ``new_dimension``: The values of the forecast horizon dimension, ranging from 0 to `forecast_length - 1`.
+            - Coordinates inherited from the input dataset `ds`.
 
     Examples
     --------
