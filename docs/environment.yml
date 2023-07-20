@@ -1,6 +1,6 @@
 name: kalman_reconstruction_docs
 dependencies:
-   - python=3.11
+   - python=3.9
    # If your docs code examples depend on other packages add them here
    - numpy
    - scipy
@@ -8,21 +8,25 @@ dependencies:
    - xarray
    - scikit-learn
    - tqdm
+   - matplotlib
    # These are needed for the docs themselves
    - numpydoc
    - sphinx
    - sphinx_rtd_theme
-   - ipython
-   - nbconvert
-   - nbformat
-   - ipykernel
-   - pandoc
+  #  - ipython
+  #  - nbconvert
+  #  - nbformat
+  #  - ipykernel
+  #  - pandoc
    - pip
    - pip:
-     - docrep<=0.2.7
+    #  - docrep
      - nbsphinx
-     - jupyter_client
-     - sphinx_pangeo_theme
+    #  - jupyter_client
+    # sphinx packages
+     - sphinx_automodapi
+     - sphinx_mdinclude
+   #   - sphinx_pangeo_theme
      - sphinx-copybutton
      - pydata-sphinx-theme
      - sphinxcontrib-srclinks

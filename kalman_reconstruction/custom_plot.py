@@ -24,7 +24,7 @@ def set_custom_rcParams():
 
     Returns:
     --------
-    None
+    colors (np.ndarray) Array containing the default colors in HEX format
 
     Note:
     -----
@@ -32,7 +32,7 @@ def set_custom_rcParams():
 
     Examples:
     ---------
-    >>> default_rcParams()
+        >>> set_custom_rcParams()
     """
 
     # Set default figure size
@@ -108,12 +108,12 @@ def plot_colors(colors):
 
     Examples:
     ---------
-    >>> colors = ['#FF0000', '#00FF00', '#0000FF']
-    >>> fig, axs = plot_colors(colors)
+        >>> colors = ['#FF0000', '#00FF00', '#0000FF']
+        >>> fig, axs = plot_colors(colors)
     """
     fig, axs = plt.subplots(figsize=(5, 1))
     for idx, color in enumerate(colors):
-        axs.scatter(idx, 1, c=color, s=300)
+        axs.scatter(idx, 1, color=color, s=300)
 
     axs.set_yticks([])
     return fig, axs
@@ -155,12 +155,12 @@ def plot_state_with_probability(
 
     Examples:
     ---------
-    >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(0, 10, 100)
-    >>> state = np.sin(x)
-    >>> prob = np.abs(np.cos(x))
-    >>> fig, ax = plt.subplots()
-    >>> plot_state_with_probability(ax, x, state, prob)
+        >>> import matplotlib.pyplot as plt
+        >>> x = np.linspace(0, 10, 100)
+        >>> state = np.sin(x)
+        >>> prob = np.abs(np.cos(x))
+        >>> fig, ax = plt.subplots()
+        >>> plot_state_with_probability(ax, x, state, prob)
     """
     p = ax.plot(x_value, state, **line_kwargs)
     f = ax.fill_between(
@@ -196,10 +196,10 @@ def adjust_lightness(color: str, amount: float = 0.75) -> str:
     Returns:
         str: The adjusted color as a hexadecimal color code.
 
-    Example usage:
-    >>> color = "red"
-    >>> adjusted_color = adjust_lightness(color, 0.5)
-    >>> print(f"Adjusted color: {adjusted_color}")
+    Example:
+        >>> color = "red"
+        >>> adjusted_color = adjust_lightness(color, 0.5)
+        >>> print(f"Adjusted color: {adjusted_color}")
 
     References:
         - Function created by Ian Hincks, available at:
@@ -249,9 +249,9 @@ def handler_map_alpha():
     Returns:
         dict: A dictionary mapping legend handler types to their update functions.
 
-    Example usage:
-    >>> ax.legend(handler_map = handhandler_map_alpha())
-    >>> print(handler_map)
+    Example:
+        >>> ax.legend(handler_map = handhandler_map_alpha())
+        >>> print(handler_map)
     """
     return {
         PathCollection: HandlerPathCollection(update_func=__set_handler_alpha_to_1__),
@@ -318,14 +318,14 @@ def symmetrize_axis(axes: Axes, axis: Union[int, str]) -> None:
         None
 
     Examples:
-        # Example 1: Symmetrize the x-axis
+        >>> # Example 1: Symmetrize the x-axis
         >>> import matplotlib.pyplot as plt
         >>> fig, ax = plt.subplots()
         >>> ax.plot(x, y)
         >>> symmetrize_axis(ax, axis=0)
         >>> plt.show()
 
-        # Example 2: Symmetrize the y-axis
+        >>> # Example 2: Symmetrize the y-axis
         >>> import matplotlib.pyplot as plt
         >>> fig, ax = plt.subplots()
         >>> ax.plot(x, y)
