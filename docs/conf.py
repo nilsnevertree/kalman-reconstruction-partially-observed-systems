@@ -22,6 +22,15 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # -- General configuration -----------------------------------------------------
 
+# Set the project information
+project = "kalman-reconstruction-partially-observed-systems"
+author = "nilsnevertree"
+
+# Add your repository URL
+github_url = (
+    f"https://github.com/nilsnevertree/kalman-reconstruction-partially-observed-systems"
+)
+
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
 
@@ -35,10 +44,17 @@ extensions = [
     "sphinx_automodapi.automodapi",
     "sphinx.ext.mathjax",
     "sphinx_mdinclude",
+    "sphinx.ext.viewcode",
 ]
 
 # Turn on sphinx.ext.autosummary
 autosummary_generate = True
+# Configure autodoc settings
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -100,15 +116,35 @@ pygments_style = "sphinx"
 
 
 # -- Options for HTML output ---------------------------------------------------
-
+html_context = {
+    "display_github": True,
+    "display_custom_author": True,
+    "custom_author": "nilsnevertree",  # Replace 'Custom Name' with the desired name
+    "github_user": "nilsnevertree",  # Username
+    "github_repo": "kalman-reconstruction-partially-observed-systems",  # Repo name
+    "github_version": "documentation",  # Version
+    "conf_py_path": "/docs/",  # Path in the checkout to the docs root
+}
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+html_theme_options = {
+    "show_nav_level": 4,
+    "navigation_depth": 4,
+    "github_button": True,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": github_url,
+            "icon": "fab fa-github-square",
+            "type": "fontawesome",
+        },
+    ],
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -144,7 +180,8 @@ html_last_updated_fmt = "%b %d, %Y"
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = html_sidebars = {
-    "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
+    # "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
+    "**": ["globaltoc.html", "sidebar-nav-bs", "sidebar-ethical-ads"]
 }
 
 # Additional templates that should be rendered to pages, maps page names to

@@ -8,6 +8,7 @@ dependencies:
    - xarray
    - scikit-learn
    - tqdm
+   - matplotlib
    # These are needed for the docs themselves
    - numpydoc
    - sphinx
@@ -25,7 +26,7 @@ dependencies:
     # sphinx packages
      - sphinx_automodapi
      - sphinx_mdinclude
-     - sphinx_pangeo_theme
+   #   - sphinx_pangeo_theme
      - sphinx-copybutton
      - pydata-sphinx-theme
      - sphinxcontrib-srclinks
