@@ -127,7 +127,7 @@ To disable it, comment out the part in [.pre-commit-config.yaml](.pre-commit-con
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-The kalman algorithms in [kalman.py](./kalman_reconstruction/kalman.py) were provided by (Pierre Tandeo)[https://github.com/ptandeo] from the [Kalman](https://github.com/ptandeo/kalman) GitHub Repository, which was as of 2023-07-18 under GPL v3.
+The kalman algorithms in [kalman.py](./kalman_reconstruction/kalman.py) were provided by [Pierre Tandeo](https://github.com/ptandeo) from the [Kalman](https://github.com/ptandeo/kalman) GitHub Repository, which was as of 2023-07-18 under GPL v3.
 
 For questions, raise an issue or contact [nilsnevertree](https://github.com/nilsnevertree)
 
