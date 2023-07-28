@@ -580,7 +580,14 @@ def autocorr(ds: xr.DataArray, lag: int = 0, dim: str = "time"):
 def crosscorr(ds1: xr.DataArray, ds2: xr.DataArray, lag: int = 0, dim: str = "time"):
     """
     Compute the lag-N cross-correlation using Pearson correlation coefficient of ds1 on ds2.
-    ds2 will be shihfted by ``lag`` timesteps.
+    Notes:
+        - It is assumed that ds1 and ds2 have the same dimensions.
+        - It is assume that the lag is found in ds2.
+        - ds2 to be shifted to the right along ``dim`
+                - [1,2,3,4,x]   lag = -1
+                - [0,1,2,3,4]   lag = 0
+                - [x,0,1,2,3]   lag = 1
+                - [x,x,0,1,2]   lag = 2
 
     Parameters:
         ds1 (xr.DataArray): First array for the cross-correlation.
@@ -590,40 +597,107 @@ def crosscorr(ds1: xr.DataArray, ds2: xr.DataArray, lag: int = 0, dim: str = "ti
 
     Returns:
         xr.DataArray: Containing the result of the cross-correlation.
+    
+    Examples:
 
-    Example:
-    >>> ds1 = xr.Dataset(
-        {"temperature": (("time", "latitude", "longitude"), temperature_data)},
-        coords={
-            "time": pd.date_range("2022-01-01", periods=365),
-            "latitude": [30, 40, 50],
-            "longitude": [-120, -110, -100],
-        },
-    )
-    >>> ds2 = xr.Dataset(
-        {"precipitation": (("time", "latitude", "longitude"), precipitation_data)},
-        coords={
-            "time": pd.date_range("2022-01-01", periods=365),
-            "latitude": [30, 40, 50],
-            "longitude": [-120, -110, -100],
-        },
-    )
-    >>> # compute 30 day lagged cross correlation
-    >>> crosscorr_value = crosscorr(
-            ds1 = ds1["temperature"],
-            ds2 = ds2["precipitation"],
-            lag=30,
-            dim="time",
+        Expect perfert correalation for latitute = 30 and longitude = 0, 10
+        Expect high correlation for latitute = 30 and longitude = 20
+        Else low correlation
+        >>> lag = -34
+        >>> periods = 3
+        >>> period = 3
+        >>> duration = periods*365 + lag
+
+        >>> rng1 = np.random.default_rng(seed = 1)
+        >>> rng2 = np.random.default_rng(seed = 2)
+        >>> temperature_data = rng2.random((duration, 3, 3))
+        >>> precipitation_data = rng1.random((duration, 3, 3))
+        >>> temperature_data[:,0,0] = precipitation_data[:,0,0] =  np.sin(period*np.linspace(0, periods*2*np.pi, duration))
+        >>> temperature_data[:,0,1] = 0 +  precipitation_data[:,0,1].copy()
+        >>> precipitation_data[:,0,2] += np.sin(np.linspace(0, periods*2*np.pi, duration))
+        >>> temperature_data[:,0,2] += np.sin(np.linspace(0, periods*2*np.pi, duration))
+        >>> ds = xr.Dataset(
+                {
+                    "precipitation": (("time", "latitude", "longitude"), precipitation_data),
+                    "temperature": (("time", "latitude", "longitude"), temperature_data)
+                },
+                coords={
+                    "time": pd.date_range("2022-01-01", periods=duration),
+                    "latitude": [30, 40, 50],
+                    "longitude": [0, 10, 20],
+                },
             )
-    >>> print(f"Cross-correlation value: {crosscorr_value}")
+        >>> # shift the data of temperature
+        >>> ds["temperature"] = ds["temperature"].shift(time = lag)
+        >>> if lag > 0:
+        >>>     ds = ds.isel(time = slice(lag, None))
+        >>> elif lag < 0:
+        >>>     ds = ds.isel(time = slice(None, lag))
+        >>> corr = crosscorr(ds.precipitation, ds.temperature, dim = "time", lag = lag)
+        >>> corr
+        <xarray.DataArray (latitude: 3, longitude: 3)>
+        array([[ 1.        ,  1.        ,  0.8745932 ],
+            [ 0.00584041, -0.02593188,  0.04378173],
+            [-0.03144279, -0.01405213,  0.03604077]])
+        Coordinates:
+        * latitude   (latitude) int32 30 40 50
+        * longitude  (longitude) int32 0 10 20
+
+        For illustration also use
+        >>> import matplotlib.pyplot as plt
+        >>> fig, axs = plt.subplots(3,1, figsize = (10,4), sharey = True, sharex = True, layout = "constrained")
+        >>> for i in range(3) :
+        ... axs[i].plot(ds.time, ds.precipitation.isel(latitude=0, longitude = i), label = "precipitation")
+        ... axs[i].plot(ds.time, ds.temperature.isel(latitude=0, longitude = i), label = "temperature")
+        ... # axs[i].plot(ds1.time, ds1.isel(latitude=0, longitude = i), linestyle = "--", label = "ds1")
+        ... # axs[i].plot(ds1.time, ds2.isel(latitude=0, longitude = i), linestyle = "--", label = "ds2")
+        ... axs[i].legend(loc = "upper right")
+        ... axs[i].set_ylabel(f"latitude = {ds.longitude[i].values}")
+        >>> plt.figure()
+        >>> corr.plot()
     """
+
     if isinstance(ds1, xr.DataArray) and isinstance(ds2, xr.DataArray):
-        return xr.corr(ds1, ds2.shift({f"{dim}": lag}), dim=dim)
+        pass
     else:
         raise NotImplementedError(
             f"Not implemented for type: {type(ds1)} and {type(ds2)}."
         )
 
+    # Bsckshift ds2 by lag
+    ds2 = ds2.shift({f"{dim}": -lag})
+    # calculate the cross-correlation
+    return xr.corr(ds1, ds2, dim=dim)
+
+def crosscorr_ds_da(ds: xr.Dataset, da: xr.Dataset, lag: int = 0, dim: str = "time"):
+    """
+    Compute the lag-N cross-correlation using Pearson correlation coefficient of ds1 on ds2 between all combinations of variables.
+    The result will be a xr.Dataset containing the cross-correlation between all combinations of variables.
+    The function uses the underlying ``crosscorr`` function.
+    
+    Parameters:
+        ds (xr.Dataset): First Fataset for the cross-correlation.
+        da (xr.DataArray): Second DataArray for the cross-correlation. This array will be shifted.
+        lag (int, optional): Number of lags to apply before performing autocorrelation. Default is 0.
+        dim (str, optional): Dimensino along which the autocorrelation shall be performed. Default is "time".
+
+    Returns:
+        xr.Dataset: Containing the result of the cross-correlation.
+            Dimensions as ``ds`` except for the dimension ``dim``.
+            Coordinates as ``ds`` except for the coordinate ``dim``.
+            Variables as ``ds`` but having the values of the cross-correlation between the variables of ``ds`` and ``da``.
+
+    """
+    res = ds.copy()
+    res = ds.isel({f"{dim}" : 0}).drop(dim)
+    for var in list(res.data_vars.keys()):
+        res[var] = crosscorr(ds[var], da, lag = lag, dim = "time")
+        res[var].attrs["long_name"] = f"Cross-correlation of {var} with {da.name}"
+        res[var].attrs["units"] = "1"
+        res[var].attrs["lag"] = lag 
+        res[var].attrs["lag_with"] = da.name
+
+    return res
 
 def compute_fft_spectrum(
     time: np.ndarray, signal: np.ndarray
@@ -700,3 +774,4 @@ def compute_fft_spectrum(
     max_frequency = 1 / (2 * delta_t)
 
     return frequencies, spectrum, amplitude, min_frequency, max_frequency
+
