@@ -597,11 +597,11 @@ def crosscorr(ds1: xr.DataArray, ds2: xr.DataArray, lag: int = 0, dim: str = "ti
 
     Returns:
         xr.DataArray: Containing the result of the cross-correlation.
-    
+
     Examples:
 
-        Expect perfert correalation for latitute = 30 and longitude = 0, 10
-        Expect high correlation for latitute = 30 and longitude = 20
+        Expect perfert correalation for latitude = 30 and longitude = 0, 10
+        Expect high correlation for latitude = 30 and longitude = 20
         Else low correlation
         >>> lag = -34
         >>> periods = 3
@@ -669,12 +669,13 @@ def crosscorr(ds1: xr.DataArray, ds2: xr.DataArray, lag: int = 0, dim: str = "ti
     # calculate the cross-correlation
     return xr.corr(ds1, ds2, dim=dim)
 
+
 def crosscorr_ds_da(ds: xr.Dataset, da: xr.Dataset, lag: int = 0, dim: str = "time"):
     """
     Compute the lag-N cross-correlation using Pearson correlation coefficient of ds1 on ds2 between all combinations of variables.
     The result will be a xr.Dataset containing the cross-correlation between all combinations of variables.
     The function uses the underlying ``crosscorr`` function.
-    
+
     Parameters:
         ds (xr.Dataset): First Fataset for the cross-correlation.
         da (xr.DataArray): Second DataArray for the cross-correlation. This array will be shifted.
@@ -689,15 +690,16 @@ def crosscorr_ds_da(ds: xr.Dataset, da: xr.Dataset, lag: int = 0, dim: str = "ti
 
     """
     res = ds.copy()
-    res = ds.isel({f"{dim}" : 0}).drop(dim)
+    res = ds.isel({f"{dim}": 0}).drop(dim)
     for var in list(res.data_vars.keys()):
-        res[var] = crosscorr(ds[var], da, lag = lag, dim = "time")
+        res[var] = crosscorr(ds[var], da, lag=lag, dim="time")
         res[var].attrs["long_name"] = f"Cross-correlation of {var} with {da.name}"
         res[var].attrs["units"] = "1"
-        res[var].attrs["lag"] = lag 
+        res[var].attrs["lag"] = lag
         res[var].attrs["lag_with"] = da.name
 
     return res
+
 
 def compute_fft_spectrum(
     time: np.ndarray, signal: np.ndarray
@@ -774,4 +776,3 @@ def compute_fft_spectrum(
     max_frequency = 1 / (2 * delta_t)
 
     return frequencies, spectrum, amplitude, min_frequency, max_frequency
-
