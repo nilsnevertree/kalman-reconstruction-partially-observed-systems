@@ -5,8 +5,15 @@ dependencies:
   # Required for full project functionality (dont remove)
   - pytest
   # Examples (remove and add as needed)
-  - jupyter
-  - jupyterlab
+  - pip
   - numpy
   - scipy
+  - pandas
+  - xarray
+  # Jupyter
+  - jupyter
+  - jupyterlab
   - scikit-learn
+  - matplotlib
+  - seaborn
+  - tqdm
