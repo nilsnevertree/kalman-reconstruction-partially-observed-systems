@@ -6,6 +6,7 @@ README
 
 As there is still an issue including the README file here, please refer to the README_
 
+.. mdinclude:: README.md
 .. mdinclude:: .\README.md
 .. mdinclude:: ..\README.md
 .. mdinclude:: ..\..\README.md
