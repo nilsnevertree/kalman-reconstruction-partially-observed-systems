@@ -1,3 +1,27 @@
+"""
+This module contains the main functions for the Kalman reconstruction pipeline.
+It is designed to be used with xarray Datasets and DataArrays. The main
+functions are:
+
+    - ``Kalman_filter`` : The Kalman filter algorithm.
+    - ``Kalman_smoother`` : The Kalman smoother algorithm.
+    - ``Kalman_SEM`` : The Kalman smoother algorithm with standard error of the mean.
+    - ``Kalman_SEM_full_output`` : The Kalman smoother algorithm with standard error of the mean where all epochs of the iterative algorithm are returned.
+
+And their time dependent counterparts:
+    - ``Kalman_filter_time_dependent`` : The Kalman filter algorithm.
+    - ``Kalman_smoother_time_dependent`` : The Kalman smoother algorithm.
+    - ``Kalman_SEM_time_dependent`` : The Kalman smoother algorithm with standard error of the mean.
+
+multiple functions are of special interest:
+    - ``add_random_variables`` : Add random variables to a Dataset.
+    - ``run_function_on_multiple_subdatasets`` : Run a function on multiple subdatasets of a Dataset. ``This can be mainly used for experiment tracking purposes.``
+    - ``to_standard_dataset`` : Convert a Dataset to a standard Dataset as returned by the Kalman algorithms.
+    - ``from_standard_dataset`` : Convert a standard Dataset as returned by the Kalman algorithms to a Dataset with readable variable names.
+
+Further information on the application can be found in the docstrings of the functions and the README.md file of the repository.
+"""
+
 import traceback
 
 from typing import Callable, Dict, Iterable, Tuple, Union
