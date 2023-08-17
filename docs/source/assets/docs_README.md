@@ -34,7 +34,7 @@ Data-driven Reconstruction of Partially Observed Dynamical Systems using Kalman 
 - Clone the repository and run ``python -m pip install . -e`` in the repository folder.
 
 ## Pipeline Usage
-The ``pipeline`` module allows a easy application of the Kalman algortihms on [xarray.DataSet](https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html) datatypes. These were chosen to handle multidimensional data created during the calculations.
+The ``pipeline`` module allows a easy application of the Kalman algorithms on [xarray.DataSet](https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html) datatypes. These were chosen to handle multidimensional data created during the calculations.
 The following example should show how to apply the Kalman SEM algorithm to an example simulation of the Lorenz63 model.
 
 ##### Imports

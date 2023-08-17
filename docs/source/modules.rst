@@ -11,7 +11,7 @@ Main Modules:
 -------------
 
 The pipeline module contains the main functions to run the reconstruction using xarray.
-The Kalman and Kalman Time Dependent modlues contain the Kalman algorithms on numpy base.
+The Kalman and Kalman Time Dependent modules contain the Kalman algorithms on numpy base.
 
 .. toctree::
    :maxdepth: 1
@@ -29,7 +29,7 @@ The further modules can be used to generate example data and analyse and visuali
 .. toctree::
     :maxdepth: 1
     :caption: Modules:
-    
+
     statistics
     example_models
     reconstruction
