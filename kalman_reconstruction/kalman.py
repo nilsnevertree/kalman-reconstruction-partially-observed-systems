@@ -1,11 +1,11 @@
-""" kalman.py: Apply the linear and Gaussian Kalman filter and smoother
-
-__author__ = "Pierre Tandeo"
-__version__ = "0.1"
-__date__ = "2022-03-09"
-__maintainer__ = "Pierre Tandeo"
-__email__ = "pierre.tandeo@imt-atlantique.fr"
-
+"""
+Module containing Kalman filter, smoother and stochastic estimation maximization alogorithm (SEM).
+The algorithms use numpy arrays as input and output and are based on the work of Tandeo et al. 2023 [1]_.
+References
+----------
+.. [1] Tandeo, Pierre, Pierre Ailliot, and Florian Sévellec. 2023.
+        Data-Driven Reconstruction of Partially Observed Dynamical Systems.
+        Nonlinear Processes in Geophysics 30 (2): 129–37. https://doi.org/10.5194/npg-30-129-2023.
 """
 
 import numpy as np

@@ -1,8 +1,15 @@
 """
 Module containing time dependent version of the Kalman filter, smoother and
-stochastic estimation maximization alogorithm.
+stochastic estimation maximization alogorithm (SEM).
 
-The module includes
+The algorithms use numpy arrays as input and output and are a modification of the original kalman.py file.
+The kalman.py file is based on the work of Tandeo et al. 2023 [1]_.
+
+References
+----------
+.. [1] Tandeo, Pierre, Pierre Ailliot, and Florian Sévellec. 2023.
+        Data-Driven Reconstruction of Partially Observed Dynamical Systems.
+        Nonlinear Processes in Geophysics 30 (2): 129–37. https://doi.org/10.5194/npg-30-129-2023.
 """
 
 from typing import Tuple
@@ -11,6 +18,7 @@ import numpy as np
 import scipy as sp
 
 from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm
 
 from kalman_reconstruction.statistics import gaussian_kernel_1D
