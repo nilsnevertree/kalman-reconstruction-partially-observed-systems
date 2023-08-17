@@ -1,3 +1,21 @@
+"""
+This module contains functions to simulate the Lorenz-63 system [1]_ . They are
+mainly used to test the Kalman reconstruction by the example of the Lorenz-63
+system.
+
+Functions:
+-----------------
+- _Lorenz_63_ODE: Calculate the derivative of the Lorenz-63 system at a given time.
+- Lorenz_63: Simulate the Lorenz-63 system and returns the results as scipy.integrate.solve_ivp [2]_ .
+- Lorenz_63_xarray: Simulate the Lorenz-63 system and returns the results as xarray.Dataset.
+
+References:
+-----------------
+.. [1] Lorenz, Edward N., 1963: Deterministic Nonperiodic Flow. *Journal of the Atmospheric Sciences*, **20**, 130-141,
+    `doi:0.1175/1520-0469(1963)020\<0130:DNF\>2.0.CO;2
+    <https://doi.org/10.1175/1520-0469(1963)020\<0130:DNF\>2.0.CO;2>`__
+"""
+
 import numpy as np
 import xarray as xr
 
@@ -7,6 +25,14 @@ from scipy.integrate import solve_ivp
 def _Lorenz_63_ODE(t, x, sigma, rho, beta):
     """
     Calculate the derivative of the Lorenz-63 system at a given time.
+
+    The ODEs were first investigated by Lorenz (1963) [1]_ .
+
+    (1) :math:`\\frac{dx}{dt} = \sigma(y-x)`
+
+    (2) :math:`\\frac{dy}{dt} = x(r-z)-y`
+
+    (3) :math:`\\frac{dz}{dt} = xy-bz`
 
     Parameters:
         t (float): The current time.
@@ -36,7 +62,16 @@ def Lorenz_63(
     method="RK45",
 ):
     """
-    Simulate the Lorenz-63 system.
+    Simulate the Lorenz-63 system and returns the results as
+    scipy.integrate.solve_ivp [2]_ .
+
+    The ODEs were first investigated by Lorenz (1963) [1]_ .
+
+    (1) :math:`\\frac{dx}{dt} = \sigma(y-x)`
+
+    (2) :math:`\\frac{dy}{dt} = x(r-z)-y`
+
+    (3) :math:`\\frac{dz}{dt} = xy-bz`
 
     Parameters:
         time_length (float): The total duration of the simulation.
@@ -50,14 +85,24 @@ def Lorenz_63(
 
     Returns:
         scipy.integrate.OdeResult: The solution of the Lorenz-63 system.
-
     Raises:
         KeyError: If both `time_length` and `time_steps` are None.
 
     Example:
-        result = Lorenz_63(time_length=10, dt=0.01, initial_condition=[8, 0, 30], sigma=10, rho=28, beta=8/3)
-        print(result.y)  # Print the state variables [x, y, z] at each time step.
+        >>> result = Lorenz_63(time_length=10, dt=0.01, initial_condition=[8, 0, 30], sigma=10, rho=28, beta=8/3)
+        >>> values = result.y # Extract state variables [x, y, z] at each time step.
+        >>> print(values) # Print the state variables [x, y, z] at each time step.
+
+    References:
+
+    .. [1] Lorenz, Edward N., 1963: Deterministic Nonperiodic Flow. *Journal of the
+        Atmospheric Sciences*, **20**, 130-141,
+        `doi:0.1175/1520-0469(1963)020\<0130:DNF\>2.0.CO;2
+        <https://doi.org/10.1175/1520-0469(1963)020\<0130:DNF\>2.0.CO;2>`__
+    .. [2] `scipy.integrate.solve_ivp
+        <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`__
     """
+
     if initial_condition is None:
         initial_condition = np.array([8, 0, 30])
     else:
@@ -104,7 +149,16 @@ def Lorenz_63_xarray(
     method="RK45",
 ):
     """
-    Simulate the Lorenz-63 system.
+    Simulate the Lorenz-63 system and returns the results as xarray Dataset.
+    This function is a wrapper around the ``Lorenz_63`` function, which uses the scipy.integrate.solve_ivp [b]_ .
+
+    The ODEs were first investigated by Lorenz (1963) [a]_ .
+
+    (1) :math:`\\frac{dx}{dt} = \sigma(y-x)`
+
+    (2) :math:`\\frac{dy}{dt} = x(r-z)-y`
+
+    (3) :math:`\\frac{dz}{dt} = xy-bz`
 
     Parameters:
         time_length (float): The total duration of the simulation.
@@ -123,8 +177,36 @@ def Lorenz_63_xarray(
         KeyError: If both `time_length` and `time_steps` are None.
 
     Example:
-        result = Lorenz_63(time_length=10, dt=0.01, initial_condition=[8, 0, 30], sigma=10, rho=28, beta=8/3)
-        print(result.y)  # Print the state variables [x, y, z] at each time step.
+        >>> results = Lorenz_63_xarray(
+        ...     time_length=10,
+        ...     dt=0.01,
+        ...     initial_condition=[8, 0, 30],
+        ...     sigma=10,
+        ...     rho=28,
+        ...     beta=8/3
+        ... )
+        >>> print(results)
+        <xarray.Dataset>
+        Dimensions:  (time: 1000)
+        Coordinates:
+        * time     (time) float64 0.0 0.01 0.02 0.03 0.04 ... 9.95 9.96 9.97 9.98 9.99
+        Data variables:
+            x1       (time) float64 8.0 7.232 6.53 5.892 ... -3.115 -2.785 -2.493 -2.236
+            x2       (time) float64 0.0 -0.1217 -0.177 -0.1789 ... 0.3176 0.2502 0.1741
+            x3       (time) float64 30.0 29.21 28.43 27.67 ... 26.6 25.89 25.2 24.53
+        Attributes:
+            description:  Lorenz Model.
+
+    References:
+
+    .. [a] Lorenz, Edward N., 1963: Deterministic Nonperiodic Flow. *Journal of the
+        Atmospheric Sciences*, **20**, 130-141,
+        `doi:0.1175/1520-0469(1963)020\<0130:DNF\>2.0.CO;2
+        <https://doi.org/10.1175/1520-0469(1963)020\<0130:DNF\>2.0.CO;2>`__
+    .. [b] `scipy.integrate.solve_ivp
+        <https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html>`__
+
+
     """
     result = Lorenz_63(
         time_length=time_length,
