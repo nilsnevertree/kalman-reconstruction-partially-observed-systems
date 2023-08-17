@@ -10,10 +10,12 @@ Repository to reconstruct partially observed systems using Kalman algorithms.
 
 .. toctree::
    :glob:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents:
 
-   source/*
+   source/readme_link
+   source/modules
+
    .. kalman
    .. pipeline
    .. statistics
