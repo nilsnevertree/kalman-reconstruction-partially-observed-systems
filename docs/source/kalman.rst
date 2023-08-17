@@ -1,8 +1,8 @@
 kalman
 =======================================================
 
-This module contains the numpy based information
-
+Functions
+---------
 .. automodapi:: kalman_reconstruction.kalman
    :members:
    :no-heading:

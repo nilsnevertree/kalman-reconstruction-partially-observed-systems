@@ -1,4 +1,4 @@
-Reconstruction
+reconstruction
 =======================================================
 
 Reconstruction function to retrieve the individual formular to retrieve the hidden Component see the notebook 02_retrieve_equations_.
