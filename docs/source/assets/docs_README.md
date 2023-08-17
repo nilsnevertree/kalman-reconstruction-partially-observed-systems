@@ -1,5 +1,4 @@
-kalman-reconstruction-partially-observered-systems
-==============================
+**kalman-reconstruction-partially-observered-systems**
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Documentation Status](https://readthedocs.org/projects/kalman-reconstruction-partially-observed-systems/badge/?version=latest)](https://kalman-reconstruction-partially-observed-systems.readthedocs.io/en/latest/?badge=latest)
 
@@ -159,10 +158,10 @@ Data variables:
 ### Pre-commit
 In order to use linting, pre-commit is used in this repository.
 To lint your code, install [pre-commit](https://pre-commit.com/) and run ``pre-commit run --all-files`` before each commit.
-This takes care of formatting all files using the configuration from [.pre-commit-config.yaml](.pre-commit-config.yaml).
+This takes care of formatting all files using the configuration from [.pre-commit-config.yaml](https://github.com/nilsnevertree/kalman-reconstruction-partially-observed-systems/blob/main/.pre-commit-config.yaml).
 
 Please note that the https://github.com/kynan/nbstripout is used to make sure that the output from notebooks is cleared.
-To disable it, comment out the part in [.pre-commit-config.yaml](.pre-commit-config.yaml?plain=1#L65)
+To disable it, comment out the part in [.pre-commit-config.yaml](https://github.com/nilsnevertree/kalman-reconstruction-partially-observed-systems/blob/main/.pre-commit-config.yaml?plain=1#L65)
 
 ## Legal notes
 
